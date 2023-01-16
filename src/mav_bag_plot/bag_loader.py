@@ -20,6 +20,7 @@ import ros_numpy
 available_msg_types = ["nav_msgs/Odometry",
                        "geometry_msgs/TransformStamped",
                        "geometry_msgs/PointStamped",
+                       "sensor_msgs/Imu"
                        ]
 
 
@@ -28,7 +29,7 @@ class State():
         self.stamp = stamp
         self.t = np.asarray([[transl.x, transl.y, transl.z]]).T
         
-        self.v = None
+        self.vel = None
         self.rot_matrix = None
         self.euler = None
         
@@ -79,6 +80,28 @@ class Point(State):
             raise Exception("Date provided can't be in the past")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
+class Imu(State):
+    def __init__(self, quat, rot_vel, lin_acc, stamp = None):
+        self.stamp = stamp
+        
+        self.t = None
+        
+        self.quat = quat
+        self.rot_matrix = None
+        self.euler = None
+        
+        self.vel = None
+        self.rot_vel = rot_vel
+        
+        self.lin_acc = lin_acc
+        self.generateOrientations()
+        
+    def transformPoint(self, point):
+        #print(self.rot_matrix.as_matrix(), "\n", self.t)
+        if(rot_mat is None):
+            raise Exception("Date provided can't be in the past")
+        return np.dot(self.rot_matrix.as_matrix(), point) + self.t
+
 def read_topic(bag, topic):
     #print('Reading topic: '+ topic)
     data = []
@@ -103,6 +126,8 @@ def read_topic(bag, topic):
             element = TF_Stamped(msg.transform.translation, msg.transform.rotation, time)
         elif msg_type == "geometry_msgs/PointStamped":
             element = Point(msg.point, time)
+        elif msg_type == "sensor_msgs/Imu":
+            element = Imu(msg.orientation, msg.angular_velocity, msg.linear_acceleration, time)
         else:
             print("sth wrong with msg_type")
             break

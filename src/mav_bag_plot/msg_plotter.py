@@ -77,6 +77,9 @@ def vis_odom(paths, names, topics = ['/Odometry'], topic_names = None):
 def plot_state_estimate_1D(list_of_containers, ax, label = None):
     if not container_ok(list_of_containers):
         return
+        
+    if not translation_ok(list_of_containers):
+        return
     
     translations = np.empty((3,1))
     stamps = list()
@@ -103,8 +106,10 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None):
     if not container_ok(list_of_containers):
         return
     
-    translations = np.empty((3,1))
+    if not translation_ok(list_of_containers):
+        return
     
+    translations = np.empty((3,1))
     for container in list_of_containers:
         translations = np.append(translations, container.t, axis = 1)
         
@@ -112,6 +117,11 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None):
     ax.axis('equal')
     
 def plot_state_estimate_3D(tfs, ax):
+    if not container_ok(list_of_containers):
+        return
+    if not translation_ok(container):
+        return
+    
     translations = np.empty((3,1))
     
     for tf in tfs:
@@ -156,3 +166,10 @@ def container_ok(list_of_containers):
         print("skipping, no msgs")
         return False
     return True
+
+def translation_ok(list_of_containers):
+    if list_of_containers[0].t is None:
+        print("skipping, no translation")
+        return False
+    return True
+        
