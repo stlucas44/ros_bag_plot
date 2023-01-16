@@ -36,9 +36,12 @@ class State():
         self.rot_vel = None
         
     def generateOrientations(self):
-        self.rot_matrix = R.from_quat([self.quat.x, self.quat.y, self.quat.z, self.quat.w])
-        self.euler = self.rot_matrix.as_euler('zxy', degrees=True)
-        
+        try:
+            self.rot_matrix = R.from_quat([self.quat.x, self.quat.y, self.quat.z, self.quat.w])
+            self.euler = self.rot_matrix.as_euler('zxy', degrees=True)
+        except ValueError:
+            pass
+            
     def reset_stamp(self, stamp):
         self.stamp = self.stamp - stamp
 
