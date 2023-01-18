@@ -105,6 +105,12 @@ class Imu(State):
             raise Exception("Date provided can't be in the past")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
+def load_bags(paths):
+    bags = []
+    for path in paths:
+        bags.append(rosbag.Bag(path))
+    return bags
+
 def read_topic(bag, topic):
     #print('Reading topic: '+ topic)
     data = []
