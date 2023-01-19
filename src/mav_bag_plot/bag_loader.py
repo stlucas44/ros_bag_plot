@@ -1,17 +1,8 @@
-from datetime import datetime, timedelta
-import os
-import copy
-
 import numpy as np
-import pandas as pd
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import scipy
 from scipy.spatial.transform import Rotation as R
 import subprocess
-import open3d as o3d
 import yaml
-
+import os
 
 import rosbag
 from rospy import Time
@@ -22,6 +13,44 @@ available_msg_types = ["nav_msgs/Odometry",
                        "geometry_msgs/PointStamped",
                        "sensor_msgs/Imu"
                        ]
+def find_files(dir, identifier=None):
+    paths = []
+    for dirpath, dirnames, filenames in os.walk(dir):
+        for filename in [f for f in filenames if f.endswith(".bag")]:
+            paths.append(os.path.join(dirpath, filename))
+            
+    if identifier is not None:
+        paths = [file for file in paths if identifier in file]
+    
+    return paths
+    
+def load_bags(paths, topics):
+    bags = []
+    for path in paths:
+        bag_container = BagContainer(path, topics)
+        bags.append(bag_container)
+    return bags                  
+                   
+class BagContainer:
+    def __init__(self, path, topics):
+        self.path = path
+        self.bag = rosbag.Bag(path)
+        self.topic_dict = {} # topic with list of msgs
+        
+        print("Loading: ", path)
+        for topic in topics:
+            msgs = read_topic(self.bag, topic)
+            if msgs is None:
+                continue
+            self.topic_dict[topic] = msgs
+        
+        self.loaded_topics = self.topic_dict.keys()
+        pass
+    def get_msgs(self, topic):
+        try:
+            return self.topic_dict[topic]
+        except KeyError:
+            return None
 
 
 class State():
@@ -80,7 +109,7 @@ class Point(State):
     def transformPoint(self, point):
         #print(self.rot_matrix.as_matrix(), "\n", self.t)
         if(rot_mat is None):
-            raise Exception("Date provided can't be in the past")
+            raise Exception("No rotation matrix found for imu msg")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class Imu(State):
@@ -102,14 +131,8 @@ class Imu(State):
     def transformPoint(self, point):
         #print(self.rot_matrix.as_matrix(), "\n", self.t)
         if(rot_mat is None):
-            raise Exception("Date provided can't be in the past")
+            raise Exception("No rotation matrix found for imu msg")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
-
-def load_bags(paths):
-    bags = []
-    for path in paths:
-        bags.append(rosbag.Bag(path))
-    return bags
 
 def read_topic(bag, topic):
     #print('Reading topic: '+ topic)
@@ -118,7 +141,7 @@ def read_topic(bag, topic):
     try:
         msg_type = bag.get_type_and_topic_info()[1][topic][0]
     except KeyError:
-        print("Oops!  Topic not found, skipping...")
+        print("Oops!  Topic '" + topic +  "' not found, skipping...")
         msg_type = "not_found_in_bag"
         return None
         

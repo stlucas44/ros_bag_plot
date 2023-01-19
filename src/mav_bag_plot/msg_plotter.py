@@ -25,9 +25,9 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     stamp_counter = 0
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
-            msg_list = bag_loader.read_topic(bag, topic)
-            plot_state_estimate_2D(msg_list, ax, name + topic_name)
-            plot_time_stamps(msg_list, ax1, stamp_counter, name + topic_name)
+            msgs = bag.get_msgs(topic)
+            plot_state_estimate_2D(msgs, ax, name + topic_name)
+            plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             stamp_counter = stamp_counter + 1
              
     ax1.legend(markerscale=3.)
@@ -56,13 +56,13 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
-            odoms = bag_loader.read_topic(bag, topic)
+            msgs = bag.get_msgs(topic)
             
             #plot_state_estimate_2D(odoms, fig1_ax1, name + ': ' + topic_name)
             #plot_orientations(odoms, [fig1_ax2, fig1_ax3, fig1_ax4], name + ': ' + topic_name)
             
-            plot_state_estimate_1D(odoms, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
-            plot_orientations(odoms, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            plot_state_estimate_1D(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
+            plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
     
     #fig1_ax1.legend(markerscale=3.0)
@@ -85,10 +85,10 @@ def vis_vel(bags, names, topics = ['/Odometry'], topic_names = None):
     
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
-            odoms = bag_loader.read_topic(bag, topic)
+            msgs = bag.get_msgs(topic)
 
-            plot_vel(odoms, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
-            plot_rot_vel(odoms, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            plot_vel(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
+            plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
     
     fig2_ax1.legend(markerscale=3.0)
@@ -112,10 +112,10 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
     
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
-            imus = bag_loader.read_topic(bag, topic)
+            msgs = bag.get_msgs(topic)
 
-            plot_accelerations(imus, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
-            plot_rot_vel(imus, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            plot_accelerations(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
+            plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
     
     fig2_ax1.legend(markerscale=3.0)
