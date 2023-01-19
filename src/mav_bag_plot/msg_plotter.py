@@ -1,18 +1,13 @@
-
-import rosbag
-from rospy import Time
-import ros_numpy
-
 import numpy as np
-import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
 from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 
-import mav_bag_plot.bag_loader as bag_loader
-
+###
+### main functions to plot states, odometries, velocities and imu data
+###
 
 def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     fig = plt.figure(figsize=(8, 8))
@@ -122,8 +117,10 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
     #fig2.tight_layout()
     plt.show()
         
+####
+#### helpers for specific types
+#### 
 
-    
 def plot_state_estimate_1D(list_of_containers, ax, label = None):
     if not container_ok(list_of_containers):
         return
@@ -277,7 +274,12 @@ def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
     for container in list_of_containers:
         times.append(container.stamp - initial_stamp)
     ax.scatter(times, [value for t in times], s = 4, label = label)
-    
+
+
+###
+### checkers to prevent 
+###
+
 def container_ok(list_of_containers):
     if list_of_containers is None or not list_of_containers: # If none or empty
         print("skipping, no msgs")

@@ -22,8 +22,18 @@ def find_files(dir, identifier=None):
         for filename in [f for f in filenames if f.endswith(".bag")]:
             paths.append(os.path.join(dirpath, filename))
             
-    if identifier is not None:
+    if identifier is None:
+        pass
+    elif isinstance(identifier, str):
         paths = [file for file in paths if identifier in file]
+    elif isinstance(identifier, list):
+        # checking if any of the identifiers are in the path
+        new_paths = []
+        for path in paths:
+            if any([(i in path) for i in identifier]):
+                new_paths.append(path)
+            
+        paths = new_paths
     
     return paths
     

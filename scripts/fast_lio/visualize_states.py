@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import os
 import copy
  
+import mav_bag_plot.bag_loader as bag_loader
 from mav_bag_plot.msg_plotter import vis_states, vis_odom
 
 min_range = 1.0
@@ -49,6 +50,7 @@ def compare_corrupted_bag():
     vis_odom(paths, names)
     
 def compare_updated_bag():
+    dir = "/home/lucas/bags/gtsam_fusion/"
     paths = [
              "/home/lucas/bags/gtsam_fusion/original.bag",
              #"/home/lucas/bags/gtsam_fusion/missing_pcl_no_gps.bag",
@@ -68,9 +70,14 @@ def compare_updated_bag():
                  #": GNSS",
                  ": LIO"]          
     
-    vis_states(paths, names, topics = topics, topic_names = topic_names)
-    vis_odom(paths, names)
-
-
+    identifier = ["original.", "evaluate_update0", "fix_timing0"]
+    files = bag_loader.find_files(dir, identifier)
+    bags = bag_loader.load_bags(files, topics)
+    names = [os.path.basename(file)[:-3] for file in files]
     
-main()
+    vis_odom(bags, names, topics = topics)
+    vis_states(bags, names, topics = topics, topic_names = topic_names)
+
+
+if __name__ == "__main__":
+    main()

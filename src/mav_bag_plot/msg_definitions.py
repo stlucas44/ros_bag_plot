@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 
-
+# base class
 class State():
     def __init__(self, transl, stamp = None):
         self.stamp = stamp
@@ -23,6 +23,7 @@ class State():
     def reset_stamp(self, stamp):
         self.stamp = self.stamp - stamp
 
+# inherited msgs from base
 class TF(State):
     def __init__(self, transl, quat, stamp = None):
         super().__init__(transl, stamp)
