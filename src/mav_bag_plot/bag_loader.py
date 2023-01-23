@@ -37,10 +37,12 @@ def find_files(dir, identifier=None):
     
     return paths
     
-def load_bags(paths, topics):
+def load_bags(paths, topics, reset_time = False):
     bags = []
     for path in paths:
         bag_container = BagContainer(path, topics)
+        if reset_time:
+            bag_container.reset_time()
         bags.append(bag_container)
     return bags                  
                    
@@ -51,19 +53,62 @@ class BagContainer:
         self.topic_dict = {} # topic with list of msgs
         
         print("Loading: ", path)
+        self.all_topics = list(self.bag.get_type_and_topic_info()[1].keys())
+        
         for topic in topics:
-            msgs = read_topic(self.bag, topic)
+            count = self.all_topics.count(topic)
+            
+            # look for surrogates if we didn't find the exact ones
+            if count == 0:    
+                topic = self.find_surrogate(topic)
+            msgs = read_topic(self.bag, topic) # TODO extend this with regex (find multiple topics?)
             if msgs is None:
                 continue
             self.topic_dict[topic] = msgs
         
         self.loaded_topics = self.topic_dict.keys()
         pass
+        
     def get_msgs(self, topic):
         try:
             return self.topic_dict[topic]
         except KeyError:
-            return None
+            #print("Precise topic", topic, " not found, ")
+            pass
+        try:
+            topic_new = self.find_surrogate(topic)
+            print("Topic", topic, " replaced with ", topic_new)
+            return self.topic_dict[topic_new]
+        except KeyError:
+            print("Surrogate topic not found")
+               
+        return None
+        
+    def find_surrogate(self, topic):
+        for full_topic in self.all_topics: # TODO: add all candidates 
+            if topic in full_topic:
+                #print("Found surrogate: ", full_topic, " for ", topic)
+                full_topic = full_topic.strip()
+                #print(list(full_topic))
+                return full_topic
+                
+        # return the input if not found
+        return topic
+    
+    def reset_time(self):
+        start_time = float("inf")
+        for msg_list in self.topic_dict.values():
+            next_start_time = msg_list[0].stamp
+            if next_start_time < start_time:
+                start_time = next_start_time
+        
+        print(start_time)
+        
+        for msg_list in self.topic_dict.values():
+            for msg in msg_list:
+                msg.stamp = msg.stamp - start_time
+            
+        
 
 def read_topic(bag, topic):
     #print('Reading topic: '+ topic)

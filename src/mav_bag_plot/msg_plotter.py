@@ -40,11 +40,11 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     
     fig2 = plt.figure(figsize=(8, 8))
     fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
-    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0))
-    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0))
-    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0))
-    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0))
-    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1)
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
     
     if topic_names is None:
         topic_names = topics
@@ -58,7 +58,7 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
             
             plot_state_estimate_1D(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
             plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
-
+            
     
     #fig1_ax1.legend(markerscale=3.0)
     #fig1.tight_layout()
@@ -69,11 +69,11 @@ def vis_vel(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
     fig2 = plt.figure(figsize=(8, 8))
     fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
-    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0))
-    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0))
-    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0))
-    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0))
-    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1)
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
     
     if topic_names is None:
         topic_names = topics
@@ -96,11 +96,11 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
     # create plot
     fig2 = plt.figure(figsize=(8, 8))
     fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0)) #accel x
-    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0)) #accel y
-    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0)) # accel z
-    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0)) 
-    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0))
-    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1) #accel y
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1) # accel z
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1) 
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
     
     if topic_names is None:
         topic_names = topics
@@ -181,27 +181,29 @@ def plot_state_estimate_3D(tfs, ax):
                
 def plot_orientations(container, axes, label = None):
     if not container_ok(container):
+        print("for label ", label)
         return
     if not orientation_ok(container):
         return
     
-    rpy = [list(), list(), list()]
+    ypr = [list(), list(), list()]
     stamps = list()
     titles = ["yaw", "pitch", "roll"]
     
     for element in container:
-        for angle, sub_list in zip(element.euler, rpy):
+        for angle, sub_list in zip(element.euler, ypr):
             sub_list.append(angle)
         
         stamps.append(element.stamp)
     
-    for ax, data, title in zip(axes, rpy, titles):
+    for ax, data, title in zip(axes, ypr, titles):
         ax.scatter(stamps, data, s = 4, label=label)
         ax.legend(markerscale=3.0)
         ax.set_title(title)
         
 def plot_accelerations(container, axes, label = None, title = "accel"):
     if not container_ok(container):
+        print("for label ", label)
         return
     
     acc = [list(), list(), list()]
@@ -224,6 +226,7 @@ def plot_accelerations(container, axes, label = None, title = "accel"):
         
 def plot_vel(container, axes, label = None):
     if not container_ok(container):
+        print("for label ", label)
         return
     if not vel_ok(container):
         return
@@ -247,6 +250,7 @@ def plot_vel(container, axes, label = None):
         
 def plot_rot_vel(container, axes, label = None):
     if not container_ok(container):
+        print("for label ", label)
         return
     
     r_vel = [list(), list(), list()]
@@ -282,7 +286,7 @@ def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
 
 def container_ok(list_of_containers):
     if list_of_containers is None or not list_of_containers: # If none or empty
-        print("skipping, no msgs")
+        print("skipping, no msgs ", end = "")
         return False
     return True
 

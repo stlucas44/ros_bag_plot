@@ -16,7 +16,7 @@ class State():
     def generateOrientations(self):
         try:
             self.rot_matrix = R.from_quat([self.quat.x, self.quat.y, self.quat.z, self.quat.w])
-            self.euler = self.rot_matrix.as_euler('zxy', degrees=True)
+            self.euler = self.rot_matrix.as_euler('ZYX', degrees=True)
         except ValueError:
             pass
             
