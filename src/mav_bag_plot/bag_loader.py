@@ -101,9 +101,7 @@ class BagContainer:
             next_start_time = msg_list[0].stamp
             if next_start_time < start_time:
                 start_time = next_start_time
-        
-        print(start_time)
-        
+                
         for msg_list in self.topic_dict.values():
             for msg in msg_list:
                 msg.stamp = msg.stamp - start_time

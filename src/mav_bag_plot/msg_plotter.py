@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import scipy
+from scipy.fft import fft, fftfreq
 from scipy.spatial.transform import Rotation as R
 import open3d as o3d
 
@@ -116,6 +117,32 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
     plt.show()
+    
+def vis_fft(bags, names, topics = ['imu/data_raw'], topic_names = None):
+    # create plot
+    fig2 = plt.figure(figsize=(8, 8))
+    fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0)) #accel x
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1) #accel y
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1) # accel z
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1) 
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
+    
+    if topic_names is None:
+        topic_names = topics
+    
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_fft(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], 
+                name + ': ' + topic_name, class_member="lin_acc", sampling_frequency = 200)
+            plot_fft(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], 
+                name + ': ' + topic_name, class_member="rot_vel")
+    
+            
+    fig2_ax1.legend(markerscale=3.0)
+    #fig2.tight_layout()
+    plt.show()
         
 ####
 #### helpers for specific types
@@ -161,6 +188,8 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None):
         translations = np.append(translations, container.t, axis = 1)
         
     ax.scatter(translations[0], translations[1], s= 4, label=label)
+    ax.plot(translations[0], translations[1], label=label)
+
     ax.axis('equal')
     
 def plot_state_estimate_3D(tfs, ax):
@@ -278,7 +307,38 @@ def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
     for container in list_of_containers:
         times.append(container.stamp - initial_stamp)
     ax.scatter(times, [value for t in times], s = 4, label = label)
+    
+def plot_fft(container, axes, label, class_member = "lin_acc"):
+    if not container_ok(container):
+        print("for label ", label)
+        return
+    
+    acc = [list(), list(), list()]
+    stamps = list()
+    titles = ["x_" + class_member, "y_" + class_member, "z_" + class_member]
+    
+    for element in container:
+        stamps.append(element.stamp)
+        vec = getattr(element, class_member)
+        acc[0].append(vec.x)
+        acc[1].append(vec.y)
+        acc[2].append(vec.z)
 
+    
+    for ax, data, title in zip(axes, acc, titles):
+        ax.scatter(*get_fft(data), alpha=0.8, s = 4, label=label)
+        ax.legend(markerscale=3.0)
+        ax.set_title(title)
+        ax.set_ylabel("Magnitude")
+        ax.set_xlabel("Frequency")
+        ax.set_yscale('log')
+        ax.set_ylim(bottom=0.5)
+
+def get_fft(signal, sampling_frequency = 1/191.0): # Adis on stork runs on 191 Hz
+    N = len(signal)
+    fft_data = fft(signal)
+    fft_freq = fftfreq(len(signal), sampling_frequency)
+    return fft_freq[0:N//2], ((np.abs(fft_data)))[0:N//2]
 
 ###
 ### checkers to prevent 

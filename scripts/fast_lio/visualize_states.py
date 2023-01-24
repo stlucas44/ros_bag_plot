@@ -13,7 +13,8 @@ min_range = 1.0
 def main():
     #compare_updates()    
     #compare_corrupted_bag()
-    compare_updated_bag()
+    #compare_updated_bag()
+    bug_fixing()
     
 def compare_updates():
     paths = ["/home/lucas/bags/gtsam_fusion/original_prediction_update.bag",
@@ -73,9 +74,31 @@ def compare_updated_bag():
     identifier = ["original.", "evaluate_update0", "fix_timing0"]
     files = bag_loader.find_files(dir, identifier)
     bags = bag_loader.load_bags(files, topics)
-    names = [os.path.basename(file)[:-3] for file in files]
+    names = [os.path.basename(file)[:-4] for file in files]
     
     vis_odom(bags, names, topics = topics)
+    vis_states(bags, names, topics = topics, topic_names = topic_names)
+    
+def bug_fixing():
+    dir = "/home/lucas/bags/gtsam_fusion/"
+    
+    identifier = ["original.", 
+                  #"no_corruption_with_update",
+                  #"with_corruption_with_update",
+                  "debug_prediction"]
+             
+    topics = ['/kolibri/mav_state_estimator/optimization',
+              '/Odometry',
+              '/debug/odom']
+    topic_names = [": Pose Graph",
+                 ": LIO update",
+                 ": LIO debug prediction"]          
+        
+    files = bag_loader.find_files(dir, identifier)
+    bags = bag_loader.load_bags(files, topics)
+    names = [os.path.basename(file)[:-4] for file in files]
+    
+    vis_odom(bags, names, topics = topics, topic_names = topic_names)
     vis_states(bags, names, topics = topics, topic_names = topic_names)
 
 
