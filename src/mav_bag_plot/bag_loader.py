@@ -102,10 +102,11 @@ class BagContainer:
             if next_start_time < start_time:
                 start_time = next_start_time
                 
+        print("Start time (first msg):  ", start_time)
+        
         for msg_list in self.topic_dict.values():
             for msg in msg_list:
                 msg.stamp = msg.stamp - start_time
-            
         
 
 def read_topic(bag, topic):
@@ -147,6 +148,5 @@ def read_topic(bag, topic):
 def get_start_time(bag_path):
       info_dict = yaml.safe_load(subprocess.Popen(['rosbag', 'info', '--yaml', bag_path], stdout=subprocess.PIPE).communicate()[0])
       duration = info_dict['duration']
-      print("Bag_start", info_dict['start'])
       start_time = info_dict['start']
       return start_time

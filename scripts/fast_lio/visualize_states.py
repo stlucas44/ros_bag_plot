@@ -14,6 +14,7 @@ def main():
     #compare_updates()    
     #compare_corrupted_bag()
     #compare_updated_bag()
+    cov_comparison()
     bug_fixing()
     
 def compare_updates():
@@ -79,17 +80,23 @@ def compare_updated_bag():
     vis_odom(bags, names, topics = topics)
     vis_states(bags, names, topics = topics, topic_names = topic_names)
     
-def bug_fixing():
+def cov_comparison():
     dir = "/home/lucas/bags/gtsam_fusion/"
     
     identifier = ["original.", 
                   #"no_corruption_with_update",
                   #"with_corruption_with_update",
-                  "debug_prediction"]
+                 "debug_prediction_cov_0.01_init",
+                 # "b395590",
+                 # "89ee811",
+                 "cov0.001.",
+                 "cov0.0001."
+                 ]
              
     topics = ['/kolibri/mav_state_estimator/optimization',
               '/Odometry',
-              '/debug/odom']
+              #'/debug/odom'
+              ]
     topic_names = [": Pose Graph",
                  ": LIO update",
                  ": LIO debug prediction"]          
@@ -98,8 +105,46 @@ def bug_fixing():
     bags = bag_loader.load_bags(files, topics)
     names = [os.path.basename(file)[:-4] for file in files]
     
-    vis_odom(bags, names, topics = topics, topic_names = topic_names)
-    vis_states(bags, names, topics = topics, topic_names = topic_names)
+    
+    for bag in bags:
+        bag.reset_time()
+        print(bag.loaded_topics)
+        if not "original" in bag.path:
+            bag.topic_dict.pop('/kolibri/mav_state_estimator/optimization')
+    vis_odom(bags, names, topics = topics)
+    vis_states(bags, names, topics = topics)
+    
+def bug_fixing():
+    dir = "/home/lucas/bags/gtsam_fusion/"
+    
+    identifier = ["original.", 
+                  #"no_corruption_with_update",
+                  #"with_corruption_with_update",
+                 # "debug_prediction_cov_0.01_init",
+                 # "b395590",
+                 # "89ee811",
+                 "cov0.001.",
+                 
+                 ]
+             
+    topics = ['/kolibri/mav_state_estimator/optimization',
+              '/Odometry',
+              #'/debug/odom'
+              ]
+    topic_names = [": Pose Graph",
+                 ": LIO update",
+                 ": LIO debug prediction"]        
+
+        
+    files = bag_loader.find_files(dir, identifier)
+    bags = bag_loader.load_bags(files, topics)
+    names = [os.path.basename(file)[:-4] for file in files]
+    
+    for bag in bags:
+        bag.reset_time()
+    
+    vis_odom(bags, names, topics = topics)
+    vis_states(bags, names, topics = topics)
 
 
 if __name__ == "__main__":

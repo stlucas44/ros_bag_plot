@@ -16,7 +16,7 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     ax1 = fig.add_subplot(212)
     
     if topic_names is None:
-        topic_names = topic_names
+        topic_names = topics
     
     stamp_counter = 0
     for bag, name in zip(bags, names):
@@ -39,7 +39,7 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     #fig1_ax3 = plt.subplot2grid(shape=(3, 3), loc=(1, 2))
     #fig1_ax4 = plt.subplot2grid(shape=(3, 3), loc=(2, 2))
     
-    fig2 = plt.figure(figsize=(8, 8))
+    fig2 = plt.figure(figsize=(16, 9))
     fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
     fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
     fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
@@ -62,13 +62,13 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
             
     
     #fig1_ax1.legend(markerscale=3.0)
-    #fig1.tight_layout()
+    fig2.tight_layout()
 
     plt.show()
     
 def vis_vel(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
-    fig2 = plt.figure(figsize=(8, 8))
+    fig2 = plt.figure(figsize=(16, 9))
     fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
     fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
     fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
@@ -166,15 +166,18 @@ def plot_state_estimate_1D(list_of_containers, ax, label = None):
 
     ax[0].scatter(stamps, translations[0], s= 4, label=label)
     ax[0].set_title("x_transl")
-    ax[0].legend(markerscale=3.)
+    #ax[0].legend(markerscale=3.)
+    #ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
     ax[1].scatter(stamps, translations[1], s= 4, label=label)
     ax[1].set_title("y_transl")
-    ax[1].legend(markerscale=3.)
+    #ax[1].legend(markerscale=3.)
 
     ax[2].scatter(stamps, translations[2], s= 4, label=label)
     ax[2].set_title("z_transl")
-    ax[2].legend(markerscale=3.)
+    
+    for item in ax:
+        item.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
     
 def plot_state_estimate_2D(list_of_containers, ax, label = None):
     if not container_ok(list_of_containers):
@@ -227,7 +230,7 @@ def plot_orientations(container, axes, label = None):
     
     for ax, data, title in zip(axes, ypr, titles):
         ax.scatter(stamps, data, s = 4, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)        
         ax.set_title(title)
         
 def plot_accelerations(container, axes, label = None, title = "accel"):
