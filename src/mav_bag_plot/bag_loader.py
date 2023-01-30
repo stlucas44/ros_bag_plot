@@ -95,12 +95,13 @@ class BagContainer:
         # return the input if not found
         return topic
     
-    def reset_time(self):
-        start_time = float("inf")
-        for msg_list in self.topic_dict.values():
-            next_start_time = msg_list[0].stamp
-            if next_start_time < start_time:
-                start_time = next_start_time
+    def reset_time(self, start_time = None):
+        if start_time is None:
+            start_time = float("inf")
+            for msg_list in self.topic_dict.values():
+                next_start_time = msg_list[0].stamp
+                if next_start_time < start_time:
+                    start_time = next_start_time
                 
         print("Start time (first msg):  ", start_time)
         

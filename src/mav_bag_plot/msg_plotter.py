@@ -143,6 +143,31 @@ def vis_fft(bags, names, topics = ['imu/data_raw'], topic_names = None):
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
     plt.show()
+    
+    
+def vis_quat(bags, names, topics = ['imu/data_raw'], topic_names = None):
+    # create plot
+    fig2 = plt.figure(figsize=(8, 8))
+    fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0)) #accel x
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1) #accel y
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1) # accel z
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1) 
+    #fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    #fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
+    
+    if topic_names is None:
+        topic_names = topics
+    
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_quat(msgs, [fig2_ax1, fig2_ax2, fig2_ax3, fig2_ax4], 
+                name + ': ' + topic_name)
+    
+            
+    fig2_ax1.legend(markerscale=3.0)
+    #fig2.tight_layout()
+    plt.show()
         
 ####
 #### helpers for specific types
@@ -163,21 +188,13 @@ def plot_state_estimate_1D(list_of_containers, ax, label = None):
         stamps.append(container.stamp)
     
     translations = np.delete(translations, 0, axis = 1) # delete the first row?
-
-    ax[0].scatter(stamps, translations[0], s= 4, label=label)
-    ax[0].set_title("x_transl")
-    #ax[0].legend(markerscale=3.)
-    #ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-    ax[1].scatter(stamps, translations[1], s= 4, label=label)
-    ax[1].set_title("y_transl")
-    #ax[1].legend(markerscale=3.)
-
-    ax[2].scatter(stamps, translations[2], s= 4, label=label)
-    ax[2].set_title("z_transl")
+    names = ["x_transl", "y_transl", "z_transl"]
     
-    for item in ax:
-        item.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
+    for a, t, n in zip(ax, translations, names):
+        #a.scatter(stamps, t, s = 4, label = label)
+        a.plot(stamps, t, 'o-', ms = 2, lw = 0.5, label = label)
+        a.set_title(n)
+        a.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
     
 def plot_state_estimate_2D(list_of_containers, ax, label = None):
     if not container_ok(list_of_containers):
@@ -186,10 +203,13 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None):
     if not translation_ok(list_of_containers):
         return
     
-    translations = np.empty((3,1))
+    translations = np.zeros((3,1))
     for container in list_of_containers:
         translations = np.append(translations, container.t, axis = 1)
-        
+    
+    # get rid of nasty first element
+    translations = np.delete(translations, 0, 1)
+    
     ax.scatter(translations[0], translations[1], s= 4, label=label)
     ax.plot(translations[0], translations[1], label=label)
 
@@ -229,8 +249,36 @@ def plot_orientations(container, axes, label = None):
         stamps.append(element.stamp)
     
     for ax, data, title in zip(axes, ypr, titles):
-        ax.scatter(stamps, data, s = 4, label=label)
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)        
+        #ax.scatter(stamps, data, s = 4, label=label)
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)   
+     
+        ax.set_title(title)
+        
+        
+def plot_quat(container, axes, label = None):
+    if not container_ok(container):
+        print("for label ", label)
+        return
+    if not orientation_ok(container):
+        return
+    
+    quats = [list(), list(), list(), list()]
+    stamps = list()
+    titles = ["x", "y", "z", "w"]
+    
+    for element in container:
+        quat = (element.quat.x, element.quat.y, element.quat.z, element.quat.w)
+        for value, sub_list in zip(quat, quats):
+            sub_list.append(value)
+        
+        stamps.append(element.stamp)
+    
+    for ax, data, title in zip(axes, quats, titles):
+        #ax.scatter(stamps, data, s = 4, label=label)
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)   
+     
         ax.set_title(title)
         
 def plot_accelerations(container, axes, label = None, title = "accel"):
@@ -308,10 +356,11 @@ def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
     times = []
     initial_stamp = list_of_containers[0].stamp
     for container in list_of_containers:
-        times.append(container.stamp - initial_stamp)
+        
+        times.append(container.stamp)# - initial_stamp)
     ax.scatter(times, [value for t in times], s = 4, label = label)
     
-def plot_fft(container, axes, label, class_member = "lin_acc"):
+def plot_fft(container, axes, label, class_member = "lin_acc", sampling_frequency = 1/191.0):
     if not container_ok(container):
         print("for label ", label)
         return
@@ -334,7 +383,7 @@ def plot_fft(container, axes, label, class_member = "lin_acc"):
         ax.set_title(title)
         ax.set_ylabel("Magnitude")
         ax.set_xlabel("Frequency")
-        ax.set_yscale('log')
+        #ax.set_yscale('log')
         ax.set_ylim(bottom=0.5)
 
 def get_fft(signal, sampling_frequency = 1/191.0): # Adis on stork runs on 191 Hz

@@ -5,7 +5,7 @@ import os
 import copy
  
 import mav_bag_plot.bag_loader as bag_loader
-from mav_bag_plot.msg_plotter import vis_states, vis_odom
+from mav_bag_plot.msg_plotter import vis_states, vis_odom, vis_quat
 
 min_range = 1.0
 
@@ -14,7 +14,7 @@ def main():
     #compare_updates()    
     #compare_corrupted_bag()
     #compare_updated_bag()
-    cov_comparison()
+    #cov_comparison()
     bug_fixing()
     
 def compare_updates():
@@ -123,8 +123,8 @@ def bug_fixing():
                  # "debug_prediction_cov_0.01_init",
                  # "b395590",
                  # "89ee811",
-                 "cov0.001.",
-                 
+                 #"cov0.001.",
+                 "relative4"
                  ]
              
     topics = ['/kolibri/mav_state_estimator/optimization',
@@ -141,8 +141,25 @@ def bug_fixing():
     names = [os.path.basename(file)[:-4] for file in files]
     
     for bag in bags:
-        bag.reset_time()
-    
+        bag.reset_time(1662477000)
+        #print(bag.loaded_topics)
+        if not "original" in bag.path:
+            bag.topic_dict.pop('/kolibri/mav_state_estimator/optimization')
+            
+    #for odom in bags[1].get_msgs("debug/odom")[110:]:
+        #R_WB = vrpn_odom.rot_matrix.as_matrix()
+        #new_mat = mean_rot_offset_WB.as_matrix().T.dot(R_WB)
+        #new_rot = R.from_matrix(new_mat) # transpose for 
+        #vrpn_odom.euler = new_rot.as_euler('ZYX', degrees=True) # before XY  aligned!!
+        
+        #old implementation:
+        #vrpn_odom.euler = vrpn_odom.rot_matrix.as_euler('ZYX', degrees=True) # before XY  aligned!!
+        # this means we have the classic eueler angles (XYZ not ZXY)!
+        
+        
+        #pass
+        
+    #vis_quat(bags, names, topics = topics)
     vis_odom(bags, names, topics = topics)
     vis_states(bags, names, topics = topics)
 
