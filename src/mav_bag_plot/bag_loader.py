@@ -6,7 +6,6 @@ import os
 
 import rosbag
 from rospy import Time
-import ros_numpy
 
 from mav_bag_plot.msg_definitions import Odom, TF, Point, Imu
 available_msg_types = ["nav_msgs/Odometry",

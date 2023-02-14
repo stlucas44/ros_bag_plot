@@ -15,7 +15,8 @@ def main():
     #compare_corrupted_bag()
     #compare_updated_bag()
     #cov_comparison()
-    bug_fixing()
+    #bug_fixing()
+    refactor_and_finalize()
     
 def compare_updates():
     paths = ["/home/lucas/bags/gtsam_fusion/original_prediction_update.bag",
@@ -124,12 +125,57 @@ def bug_fixing():
                  # "b395590",
                  # "89ee811",
                  #"cov0.001.",
-                 "relative4"
+                 "eval0"
                  ]
              
     topics = ['/kolibri/mav_state_estimator/optimization',
               '/Odometry',
-              #'/debug/odom'
+              '/debug/odom'
+              ]
+    topic_names = [": Pose Graph",
+                 ": LIO update",
+                 ": LIO debug prediction"]        
+
+        
+    files = bag_loader.find_files(dir, identifier)
+    bags = bag_loader.load_bags(files, topics)
+    names = [os.path.basename(file)[:-4] for file in files]
+    
+    for bag in bags:
+        bag.reset_time(1662477000)
+        #print(bag.loaded_topics)
+        if not "original" in bag.path:
+            bag.topic_dict.pop('/kolibri/mav_state_estimator/optimization')
+            
+    #for odom in bags[1].get_msgs("debug/odom")[110:]:
+        #R_WB = vrpn_odom.rot_matrix.as_matrix()
+        #new_mat = mean_rot_offset_WB.as_matrix().T.dot(R_WB)
+        #new_rot = R.from_matrix(new_mat) # transpose for 
+        #vrpn_odom.euler = new_rot.as_euler('ZYX', degrees=True) # before XY  aligned!!
+        
+        #old implementation:
+        #vrpn_odom.euler = vrpn_odom.rot_matrix.as_euler('ZYX', degrees=True) # before XY  aligned!!
+        # this means we have the classic eueler angles (XYZ not ZXY)!
+        
+        
+        #pass
+        
+    #vis_quat(bags, names, topics = topics)
+    vis_odom(bags, names, topics = topics)
+    vis_states(bags, names, topics = topics)
+
+def refactor_and_finalize():
+    dir = "/home/lucas/bags/gtsam_fusion/"
+    
+    identifier = ["original.", 
+                 #"cov0.001.",
+                 #"refactor0",
+                 "refactor3"
+                 ]
+             
+    topics = ['/kolibri/mav_state_estimator/optimization',
+              '/Odometry',
+              '/debug/odom'
               ]
     topic_names = [": Pose Graph",
                  ": LIO update",
