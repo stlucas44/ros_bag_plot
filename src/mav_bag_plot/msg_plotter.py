@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import scipy
 from scipy.fft import fft, fftfreq
 from scipy.spatial.transform import Rotation as R
-import open3d as o3d
+#import open3d as o3d
 
 ###
 ### main functions to plot states, odometries, velocities and imu data
@@ -169,6 +169,31 @@ def vis_quat(bags, names, topics = ['imu/data_raw'], topic_names = None):
     #fig2.tight_layout()
     plt.show()
         
+def vis_flow(bags, names, topics = ['/stork/optical_flow125'], topic_names = None):
+    # create plot
+    fig2 = plt.figure(figsize=(8, 8))
+    fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1) 
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
+    
+    if topic_names is None:
+        topic_names = topics
+    
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_flow(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], 
+                name + ': ' + topic_name)
+            plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            #plot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+
+    fig2_ax1.legend(markerscale=3.0)
+    #fig2.tight_layout()
+    plt.show()
+
 ####
 #### helpers for specific types
 #### 
@@ -268,7 +293,7 @@ def plot_quat(container, axes, label = None):
     titles = ["x", "y", "z", "w"]
     
     for element in container:
-        quat = (element.quat.x, element.quat.y, element.quat.z, element.quat.w)
+        quat = element.quat
         for value, sub_list in zip(quat, quats):
             sub_list.append(value)
         
@@ -284,6 +309,9 @@ def plot_quat(container, axes, label = None):
 def plot_accelerations(container, axes, label = None, title = "accel"):
     if not container_ok(container):
         print("for label ", label)
+        return
+
+    if not accel_ok(container):
         return
     
     acc = [list(), list(), list()]
@@ -332,6 +360,9 @@ def plot_rot_vel(container, axes, label = None):
     if not container_ok(container):
         print("for label ", label)
         return
+
+    if not rot_vel_ok(container):
+        return
     
     r_vel = [list(), list(), list()]
     stamps = list()
@@ -347,6 +378,33 @@ def plot_rot_vel(container, axes, label = None):
         ax.scatter(stamps, data, s = 4, label=label)
         ax.legend(markerscale=3.0)
         ax.set_ylabel("rad/s")
+        ax.set_title(title)
+
+def plot_flow(container, axes, label = None):
+    if not container_ok(container):
+        print("for label ", label)
+        return
+
+    if not flow_ok(container):
+        return
+    
+    scaling = 1
+
+    flow = [list(), list(), list()]
+    stamps = list()
+    titles = ["x_flow *" + str(scaling), "y_flow *" + str(scaling), "range"]
+    
+
+    for element in container:
+        stamps.append(element.stamp)
+        flow[0].append(scaling * element.flow[0])
+        flow[1].append(scaling * element.flow[1])
+        flow[2].append(element.range)
+    
+    for ax, data, title in zip(axes, flow, titles):
+        ax.scatter(stamps, data, s = 4, label=label)
+        ax.legend(markerscale=3.0)
+        #ax.set_ylabel("")
         ax.set_title(title)
     
 def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
@@ -414,9 +472,26 @@ def vel_ok(list_of_containers):
         return False
     return True
 
+def accel_ok(list_of_containers):
+    if list_of_containers[0].lin_acc is None:
+        print("skipping, no linear acceleration")
+        return False
+    return True
+
 def orientation_ok(list_of_containers):
     if list_of_containers[0].euler is None:
         print("skipping, no velocity")
         return False
     return True
         
+def rot_vel_ok(list_of_containers):
+    if list_of_containers[0].lin_acc is None:
+        print("skipping, no linear acceleration")
+        return False
+    return True
+
+def flow_ok(list_of_containers):
+    if list_of_containers[0].flow is None:
+        print("skipping, no flow")
+        return False
+    return True

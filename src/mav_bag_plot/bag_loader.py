@@ -7,11 +7,13 @@ import os
 import rosbag
 from rospy import Time
 
-from mav_bag_plot.msg_definitions import Odom, TF, Point, Imu
+from mav_bag_plot.msg_definitions import Odom, TF, Point, Imu, OpticalFlow
 available_msg_types = ["nav_msgs/Odometry",
                        "geometry_msgs/TransformStamped",
                        "geometry_msgs/PointStamped",
-                       "sensor_msgs/Imu"
+                       "sensor_msgs/Imu",
+                       "trajectory_msgs/MultiDOFJointTrajectory",
+                       "arkflow_ros/OpticalFlow"
                        ]
 
 
@@ -43,7 +45,7 @@ def load_bags(paths, topics, reset_time = False):
         if reset_time:
             bag_container.reset_time()
         bags.append(bag_container)
-    return bags                  
+    return bags
                    
 class BagContainer:
     def __init__(self, path, topics):
@@ -135,6 +137,17 @@ def read_topic(bag, topic):
             element = Point(msg.point, time)
         elif msg_type == "sensor_msgs/Imu":
             element = Imu(msg.orientation, msg.angular_velocity, msg.linear_acceleration, time)
+        elif msg_type == "trajectory_msgs/MultiDOFJointTrajectory":
+            if len(msg.points) == 0:
+                continue
+                print("no points for MultiDOFJointTrajectory")
+            elif len(msg.points) == 1:
+                element = TF(msg.points[0].transforms[0].translation, msg.points[0].transforms[0].rotation, time)
+            else:
+                print("Missing implementation on MultiDOFJointTrajectory (multiple points)")
+                break
+        elif msg_type == "arkflow_ros/OpticalFlow":
+            element = OpticalFlow([msg.flow_integral_x, msg.flow_integral_y], [msg.rate_gyro_integral_x, msg.rate_gyro_integral_y], msg.range, msg.integration_interval, time)
         else:
             print("sth wrong with msg_type")
             break
