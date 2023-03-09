@@ -240,16 +240,16 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None):
 
     ax.axis('equal')
     
-def plot_state_estimate_3D(tfs, ax):
+def plot_state_estimate_3D(list_of_containers, ax):
     if not container_ok(list_of_containers):
         return
-    if not translation_ok(container):
+    if not translation_ok(list_of_containers):
         return
     
     translations = np.empty((3,1))
     
-    for tf in tfs:
-        translations = np.append(translations, tf.t, axis = 1);
+    for tf in list_of_containers:
+        translations = np.append(translations, tf.t, axis = 1); 
         
     ax.scatter(translations[0], 
                translations[1],
@@ -388,24 +388,25 @@ def plot_flow(container, axes, label = None):
     if not flow_ok(container):
         return
     
-    scaling = 1
-
     flow = [list(), list(), list()]
     stamps = list()
-    titles = ["x_flow *" + str(scaling), "y_flow *" + str(scaling), "range"]
+    titles = ["x_flow", "y_flow", "range"]
     
 
     for element in container:
         stamps.append(element.stamp)
-        flow[0].append(scaling * element.flow[0])
-        flow[1].append(scaling * element.flow[1])
+        flow[0].append(element.flow[0])
+        flow[1].append(element.flow[1])
         flow[2].append(element.range)
     
+    # add absolute flow
     for ax, data, title in zip(axes, flow, titles):
         ax.scatter(stamps, data, s = 4, label=label)
         ax.legend(markerscale=3.0)
         #ax.set_ylabel("")
         ax.set_title(title)
+
+    # add rot vels for comparison
     
 def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
     if not container_ok(list_of_containers):
@@ -485,8 +486,8 @@ def orientation_ok(list_of_containers):
     return True
         
 def rot_vel_ok(list_of_containers):
-    if list_of_containers[0].lin_acc is None:
-        print("skipping, no linear acceleration")
+    if list_of_containers[0].rot_vel is None:
+        print("skipping, no rotational velocity")
         return False
     return True
 

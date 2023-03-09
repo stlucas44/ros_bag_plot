@@ -89,23 +89,37 @@ class Imu(State):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class OpticalFlow(State):
-    def __init__(self, flow, rot_vel, range, integration_interval, stamp = None):
+    def __init__(self, flow, rot_integral, range, integration_interval, stamp = None):
         self.stamp = stamp
 
         # sensor frame
-        v_x_loc = flow[0] * range / integration_interval # this is the absolute change?
-        v_y_loc = flow[1] * range / integration_interval
+        v_x_loc_uncorrected = flow[0] * range / integration_interval # this is the absolute change?
+        v_y_loc_uncorrected = flow[1] * range / integration_interval
 
-        self.t = np.asarray([[-v_y_loc, -v_x_loc, range]]).T
-        self.vel = PseudoVec(-v_y_loc, -v_x_loc, 0)
+        v_x_loc = (flow[0] - rot_integral[0]) * range / integration_interval # this is the absolute change?
+        v_y_loc = (flow[1] - rot_integral[1]) * range / integration_interval
+
+        #writing it down in body frame
+        self.t = np.asarray([[0.0, 0.0, range]]).T
+        self.vel = PseudoVec(-v_y_loc, 
+                             -v_x_loc, 
+                             0)
 
         self.lin_acc = None
-        self.flow = flow
+        self.flow = [-flow[1], -flow[0]]
         self.integration_interval = integration_interval
 
         self.range = range
-        self.rot_vel = rot_vel
-        self.t = np.asarray([[0.0, 0.0, range]]).T
+        self.rot_vel = PseudoVec(-rot_integral[1] / integration_interval,
+                                 -rot_integral[0] / integration_interval,
+                                0.0)
+        self.rot_integral = rot_integral
+
+
+        self.vel_uncorrected= PseudoVec(-v_y_loc_uncorrected, 
+                                        -v_x_loc_uncorrected, 
+                                        0)
+
 
         self.euler = None
 

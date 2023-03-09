@@ -128,7 +128,7 @@ def read_topic(bag, topic):
 
     for topic, msg, t in bag.read_messages(topics=[topic]):
         time = msg.header.stamp.secs + (10**-9 * msg.header.stamp.nsecs)
-                
+        
         if msg_type == "nav_msgs/Odometry":
             element = Odom(msg.pose.pose.position, msg.pose.pose.orientation, msg.twist.twist.linear, msg.twist.twist.angular, time)
         elif msg_type == "geometry_msgs/TransformStamped":
