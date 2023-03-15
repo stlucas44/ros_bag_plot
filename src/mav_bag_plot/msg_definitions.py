@@ -96,9 +96,10 @@ class OpticalFlow(State):
         v_x_loc_uncorrected = flow[0] * range / integration_interval # this is the absolute change?
         v_y_loc_uncorrected = flow[1] * range / integration_interval
 
-        v_x_loc = (flow[0] - rot_integral[0]) * range / integration_interval # this is the absolute change?
-        v_y_loc = (flow[1] - rot_integral[1]) * range / integration_interval
-
+        # attention to signs!!
+        v_x_loc = (flow[0] - rot_integral[1]) * range / integration_interval # this is the absolute change?
+        v_y_loc = (flow[1] + rot_integral[0]) * range / integration_interval
+        
         #writing it down in body frame
         self.t = np.asarray([[0.0, 0.0, range]]).T
         self.vel = PseudoVec(-v_y_loc, 
