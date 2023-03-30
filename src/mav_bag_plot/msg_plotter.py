@@ -29,7 +29,7 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     ax1.legend(markerscale=3.)
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
-    plt.show()
+    plt.draw()
 
 def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
@@ -64,7 +64,7 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     #fig1_ax1.legend(markerscale=3.0)
     fig2.tight_layout()
 
-    plt.show()
+    plt.draw()
     
 def vis_vel(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
@@ -90,7 +90,7 @@ def vis_vel(bags, names, topics = ['/Odometry'], topic_names = None):
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
 
-    plt.show()
+    plt.draw()
     
     
 def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
@@ -116,7 +116,7 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
     
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
-    plt.show()
+    plt.draw()
     
 def vis_fft(bags, names, topics = ['imu/data_raw'], topic_names = None):
     # create plot
@@ -142,7 +142,7 @@ def vis_fft(bags, names, topics = ['imu/data_raw'], topic_names = None):
             
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
-    plt.show()
+    plt.draw()
     
     
 def vis_quat(bags, names, topics = ['imu/data_raw'], topic_names = None):
@@ -167,7 +167,7 @@ def vis_quat(bags, names, topics = ['imu/data_raw'], topic_names = None):
             
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
-    plt.show()
+    plt.draw()
         
 def vis_flow(bags, names, topics = ['/stork/optical_flow125'], topic_names = None):
     # create plot
@@ -178,7 +178,7 @@ def vis_flow(bags, names, topics = ['/stork/optical_flow125'], topic_names = Non
     fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1) 
     fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
     fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
-    
+
     if topic_names is None:
         topic_names = topics
     
@@ -187,13 +187,62 @@ def vis_flow(bags, names, topics = ['/stork/optical_flow125'], topic_names = Non
             msgs = bag.get_msgs(topic)
             plot_flow(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], 
                 name + ': ' + topic_name)
-            plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
-            #plot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            #plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            plot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
     fig2_ax1.legend(markerscale=3.0)
     #fig2.tight_layout()
-    plt.show()
+    plt.draw()
 
+
+def vis_timing(bags, names, topics, topic_names):
+    fig = plt.figure(figsize=(8, 8))
+    ax1 = fig.add_subplot(211)# projection='3d')
+    ax2 = fig.add_subplot(212)
+    
+    if topic_names is None:
+        topic_names = topics
+    
+    stamp_counter = 0
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
+            plot_time_diffs(msgs, ax2, stamp_counter, name + topic_name)
+
+            stamp_counter = stamp_counter + 1
+            
+    ax1.legend(markerscale=3.)
+    ax2.legend(markerscale=3.)
+    #fig.tight_layout()
+    #ax.title("Matching timestamps (but not receipt time!!)")
+    plt.draw()
+
+
+def vis_wrench(bags, names, topics = ['/stork/optical_flow125'], topic_names = None):
+    # create plot
+    fig2 = plt.figure(figsize=(8, 8))
+    fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1) 
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
+
+    if topic_names is None:
+        topic_names = topics
+    
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_force(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], 
+                name + ': ' + topic_name)
+            #plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            plot_torque(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+
+    fig2_ax1.legend(markerscale=3.0)
+    #fig2.tight_layout()
+    plt.draw()
 ####
 #### helpers for specific types
 #### 
@@ -326,7 +375,7 @@ def plot_accelerations(container, axes, label = None, title = "accel"):
 
     
     for ax, data, title in zip(axes, acc, titles):
-        ax.scatter(stamps, data, s = 4, label=label)
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
         ax.legend(markerscale=3.0)
         ax.set_title(title)
         ax.set_ylabel("m/s2")
@@ -350,7 +399,7 @@ def plot_vel(container, axes, label = None):
         r_vel[2].append(element.vel.z)
     
     for ax, data, title in zip(axes, r_vel, titles):
-        ax.scatter(stamps, data, s = 4, label=label)
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
         ax.legend(markerscale=3.0)
         ax.set_ylabel("m/s")
         ax.set_title(title)
@@ -375,7 +424,7 @@ def plot_rot_vel(container, axes, label = None):
         r_vel[2].append(element.rot_vel.z)
     
     for ax, data, title in zip(axes, r_vel, titles):
-        ax.scatter(stamps, data, s = 4, label=label)
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
         ax.legend(markerscale=3.0)
         ax.set_ylabel("rad/s")
         ax.set_title(title)
@@ -401,12 +450,65 @@ def plot_flow(container, axes, label = None):
     
     # add absolute flow
     for ax, data, title in zip(axes, flow, titles):
-        ax.scatter(stamps, data, s = 4, label=label)
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
         ax.legend(markerscale=3.0)
         #ax.set_ylabel("")
         ax.set_title(title)
 
     # add rot vels for comparison
+
+def plot_force(container,axes, label):
+    if not container_ok(container):
+        print("for label ", label)
+        return
+
+    if not wrench_ok(container):
+        return
+    
+    f = [list(), list(), list()]
+    stamps = list()
+    titles = ["f_x", "f_y", "f_z"]
+    
+
+    for element in container:
+        stamps.append(element.stamp)
+        #for f_i, force in zip(f, element.force): # axis wise append
+        #    f_i.append(force)
+        f[0].append(element.force[0])
+        f[1].append(element.force[1])
+        f[2].append(element.force[2])
+
+    for ax, data, title in zip(axes, f, titles):
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+        ax.legend(markerscale=3.0)
+        ax.set_title(title)
+
+
+def plot_torque(container,axes, label):
+    if not container_ok(container):
+        print("for label ", label)
+        return
+
+    if not wrench_ok(container):
+        return
+    
+    t = [list(), list(), list()]
+    stamps = list()
+    titles = ["t_x", "t_y", "t_z"]
+    
+
+    for element in container:
+        stamps.append(element.stamp)
+        t[0].append(element.torque[0])
+        t[1].append(element.torque[1])
+        t[2].append(element.torque[2])
+
+    for ax, data, title in zip(axes, t, titles):
+        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+        ax.legend(markerscale=3.0)
+        ax.set_title(title)
+
+
     
 def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
     if not container_ok(list_of_containers):
@@ -418,6 +520,32 @@ def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
         
         times.append(container.stamp)# - initial_stamp)
     ax.scatter(times, [value for t in times], s = 4, label = label)
+
+def plot_time_diffs(list_of_containers, ax, value = 0, label = None):
+    if not container_ok(list_of_containers):
+        return
+
+    plot_interval = hasattr(list_of_containers[0], 'integration_interval')
+        
+    times = []
+    diffs = []
+    measurements = []
+
+    prev = list_of_containers[0].stamp - 0.1
+    for container in list_of_containers:
+        diffs.append(1/(container.stamp - prev))
+        times.append(container.stamp)# - initial_stamp)
+
+        if plot_interval:
+            measurements.append(1/  container.integration_interval)
+        prev = container.stamp
+    
+    ax.scatter(times, diffs, s = 4, label = label + '_stamp_diff')
+
+    # if it has an internal time measurement
+    if plot_interval:
+        ax.scatter(times,  measurements, s = 4, label = label + '_measured')
+
     
 def plot_fft(container, axes, label, class_member = "lin_acc", sampling_frequency = 1/191.0):
     if not container_ok(container):
@@ -493,6 +621,12 @@ def rot_vel_ok(list_of_containers):
 
 def flow_ok(list_of_containers):
     if list_of_containers[0].flow is None:
+        print("skipping, no flow")
+        return False
+    return True
+
+def wrench_ok(list_of_containers):
+    if list_of_containers[0].force is None:
         print("skipping, no flow")
         return False
     return True

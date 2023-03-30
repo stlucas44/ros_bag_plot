@@ -18,6 +18,8 @@ class State():
         self.rot_vel = None
         
         self.flow = None
+        self.force = None
+        self.torque = None
         
     def generateOrientations(self):
         try:
@@ -56,6 +58,19 @@ class Odom(State):
         #print(self.rot_matrix.as_matrix(), "\n", self.t)
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
+class MultiDOFJointTrajectory(State):
+    def __init__(self, tpoints, stamp = None):
+        super().__init__(tpoints[0].transforms[0].translation, stamp = stamp)
+
+        quat = tpoints[0].transforms[0].rotation
+        self.quat = [quat.x, quat.y, quat.z, quat.w]
+
+        self.vel = tpoints[0].velocities[0].linear
+        self.rot_vel = tpoints[0].velocities[0].angular
+        self.lin_acc = tpoints[0].accelerations[0].linear
+
+        self.generateOrientations()
+
 class Point(State):
     # default constructor applied
     def generateOrientations(self):
@@ -64,8 +79,8 @@ class Point(State):
 
     def transformPoint(self, point):
         #print(self.rot_matrix.as_matrix(), "\n", self.t)
-        if(rot_mat is None):
-            raise Exception("No rotation matrix found for imu msg")
+        if(self.rot_matrix is None):
+            raise Exception("No rotation matrix found for point msg")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class Imu(State):
@@ -84,13 +99,13 @@ class Imu(State):
         
     def transformPoint(self, point):
         #print(self.rot_matrix.as_matrix(), "\n", self.t)
-        if(rot_mat is None):
+        if(self.rot_matrix is None):
             raise Exception("No rotation matrix found for imu msg")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class OpticalFlow(State):
     def __init__(self, flow, rot_integral, range, integration_interval, stamp = None):
-        self.stamp = stamp
+        super().__init__(stamp = stamp)
 
         # sensor frame
         v_x_loc_uncorrected = flow[0] * range / integration_interval # this is the absolute change?
@@ -128,6 +143,12 @@ class OpticalFlow(State):
         print("implement transform rot_vel")
         pass
 
+
+class Wrench(State):
+    def __init__(self, force, torque, stamp):
+        super().__init__(stamp = stamp)
+        self.force = [force.x, force.y, force.z]
+        self.torque = [torque.x, torque.y, torque.z]
 
 ## Vector surrogate for manipulating data
 class PseudoVec():

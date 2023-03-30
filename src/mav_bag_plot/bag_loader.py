@@ -7,13 +7,14 @@ import os
 import rosbag
 from rospy import Time
 
-from mav_bag_plot.msg_definitions import Odom, TF, Point, Imu, OpticalFlow
+from mav_bag_plot.msg_definitions import Odom, TF, Point, Imu, OpticalFlow, Wrench, MultiDOFJointTrajectory
 available_msg_types = ["nav_msgs/Odometry",
                        "geometry_msgs/TransformStamped",
                        "geometry_msgs/PointStamped",
                        "sensor_msgs/Imu",
                        "trajectory_msgs/MultiDOFJointTrajectory",
-                       "arkflow_ros/OpticalFlow"
+                       "arkflow_ros/OpticalFlow",
+                       "mav_msgs/TorqueThrust"  
                        ]
 
 
@@ -142,12 +143,18 @@ def read_topic(bag, topic):
                 continue
                 print("no points for MultiDOFJointTrajectory")
             elif len(msg.points) == 1:
-                element = TF(msg.points[0].transforms[0].translation, msg.points[0].transforms[0].rotation, time)
+                element = MultiDOFJointTrajectory(msg.points, time)
             else:
                 print("Missing implementation on MultiDOFJointTrajectory (multiple points)")
                 break
         elif msg_type == "arkflow_ros/OpticalFlow":
-            element = OpticalFlow([msg.flow_integral_x, msg.flow_integral_y], [msg.rate_gyro_integral_x, msg.rate_gyro_integral_y], msg.range, msg.integration_interval, time)
+            element = OpticalFlow([msg.flow_integral_x, msg.flow_integral_y], 
+                                  [msg.rate_gyro_integral_x, msg.rate_gyro_integral_y], 
+                                   msg.range, msg.integration_interval, time)
+        
+        elif msg_type == "mav_msgs/TorqueThrust":
+            element = Wrench(msg.thrust, msg.torque, time)
+
         else:
             print("sth wrong with msg_type")
             break
