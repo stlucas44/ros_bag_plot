@@ -26,7 +26,7 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
             plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             stamp_counter = stamp_counter + 1
              
-    ax1.legend(markerscale=3.)
+    ax1.legend(markerscale=3.0, loc= 2 )
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
     plt.draw()
@@ -61,7 +61,42 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
             plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
             
     
-    #fig1_ax1.legend(markerscale=3.0)
+    #fig1_ax1.legend(markerscale=3.0, loc= 2)
+    fig2.tight_layout()
+
+    plt.draw()
+
+def vis_odom_state_w_cov(bags, names, topics = ['/Odometry'], topic_names = None):
+    # create plot
+    #fig1 = plt.figure(figsize=(8, 8))
+    #fig1_ax1 = plt.subplot2grid(shape=(3, 3), loc=(0, 0), colspan=2, rowspan=3)
+    #fig1_ax2 = plt.subplot2grid(shape=(3, 3), loc=(0, 2))
+    #fig1_ax3 = plt.subplot2grid(shape=(3, 3), loc=(1, 2))
+    #fig1_ax4 = plt.subplot2grid(shape=(3, 3), loc=(2, 2))
+    
+    fig2 = plt.figure(figsize=(16, 9))
+    fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1)
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
+    
+    if topic_names is None:
+        topic_names = topics
+    
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            
+            #plot_state_estimate_2D(odoms, fig1_ax1, name + ': ' + topic_name)
+            #plot_orientations(odoms, [fig1_ax2, fig1_ax3, fig1_ax4], name + ': ' + topic_name)
+            
+            plot_state_estimate_1D(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name, plot_cov=True)
+            plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            
+    
+    #fig1_ax1.legend(markerscale=3.0, loc= 2)
     fig2.tight_layout()
 
     plt.draw()
@@ -87,7 +122,33 @@ def vis_vel(bags, names, topics = ['/Odometry'], topic_names = None):
             plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
     
-    fig2_ax1.legend(markerscale=3.0)
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
+    #fig2.tight_layout()
+
+    plt.draw()
+
+def vis_vel_w_cov(bags, names, topics = ['/Odometry'], topic_names = None, plot_covs = None):
+    # create plot
+    fig2 = plt.figure(figsize=(16, 9))
+    fig2_ax1 = plt.subplot2grid(shape=(6, 1), loc=(0, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(6, 1), loc=(1, 0), sharex = fig2_ax1)
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex = fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1)
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
+    
+    if topic_names is None:
+        topic_names = topics
+    
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+
+            plot_vel(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name, plot_cov = True)
+            plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+
+    
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
     #fig2.tight_layout()
 
     plt.draw()
@@ -114,7 +175,7 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
             plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
     
-    fig2_ax1.legend(markerscale=3.0)
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
     #fig2.tight_layout()
     plt.draw()
     
@@ -140,7 +201,7 @@ def vis_fft(bags, names, topics = ['imu/data_raw'], topic_names = None):
                 name + ': ' + topic_name, class_member="rot_vel")
     
             
-    fig2_ax1.legend(markerscale=3.0)
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
     #fig2.tight_layout()
     plt.draw()
     
@@ -165,7 +226,7 @@ def vis_quat(bags, names, topics = ['imu/data_raw'], topic_names = None):
                 name + ': ' + topic_name)
     
             
-    fig2_ax1.legend(markerscale=3.0)
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
     #fig2.tight_layout()
     plt.draw()
         
@@ -190,7 +251,7 @@ def vis_flow(bags, names, topics = ['/stork/optical_flow125'], topic_names = Non
             #plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
             plot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
-    fig2_ax1.legend(markerscale=3.0)
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
     #fig2.tight_layout()
     plt.draw()
 
@@ -212,8 +273,8 @@ def vis_timing(bags, names, topics, topic_names):
 
             stamp_counter = stamp_counter + 1
             
-    ax1.legend(markerscale=3.)
-    ax2.legend(markerscale=3.)
+    ax1.legend(markerscale=3.0, loc= 2 )
+    ax2.legend(markerscale=3.0, loc= 2 )
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
     plt.draw()
@@ -240,14 +301,14 @@ def vis_wrench(bags, names, topics = ['/stork/optical_flow125'], topic_names = N
             #plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
             plot_torque(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
-    fig2_ax1.legend(markerscale=3.0)
+    fig2_ax1.legend(markerscale=3.0, loc= 2)
     #fig2.tight_layout()
     plt.draw()
 ####
 #### helpers for specific types
 #### 
 
-def plot_state_estimate_1D(list_of_containers, ax, label = None):
+def plot_state_estimate_1D(list_of_containers, ax, label = None, plot_cov = False):
     if not container_ok(list_of_containers):
         return
         
@@ -255,20 +316,41 @@ def plot_state_estimate_1D(list_of_containers, ax, label = None):
         return
     
     translations = np.empty((3,1))
+    covs = np.empty((3,1))
     stamps = list()
     
     for container in list_of_containers:
         translations = np.append(translations, container.t, axis = 1)
         stamps.append(container.stamp)
+
+        if plot_cov and container.pose_covariance is not None:
+            # extract the diagoals, keep the first 3
+            cov_diags = np.diag(container.pose_covariance)[:3].reshape((3,1))
+            covs = np.append(covs, cov_diags, axis = 1)
     
     translations = np.delete(translations, 0, axis = 1) # delete the first row?
+    covs = np.delete(covs, 0, axis = 1) # delete the first row?
+
     names = ["x_transl", "y_transl", "z_transl"]
+
+    if plot_cov and covs.size!=0:
+        for a, t, cov, n in zip(ax, translations, covs, names):
+            upper = t + np.sqrt(cov)
+            lower = t - np.sqrt(cov)
+
+            a.plot(stamps, t, 'o-', ms = 2, lw = 0.5, label = label)
+            a.fill_between(stamps, lower, upper, alpha=0.2, color = a.get_lines()[-1].get_c())
+
+            a.set_title(n)
+            a.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
+
     
-    for a, t, n in zip(ax, translations, names):
-        #a.scatter(stamps, t, s = 4, label = label)
-        a.plot(stamps, t, 'o-', ms = 2, lw = 0.5, label = label)
-        a.set_title(n)
-        a.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
+    else:
+        for a, t, n in zip(ax, translations, names):
+            #a.scatter(stamps, t, s = 4, label = label)
+            a.plot(stamps, t, 'o-', ms = 2, lw = 0.5, label = label)
+            a.set_title(n)
+            a.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
     
 def plot_state_estimate_2D(list_of_containers, ax, label = None):
     if not container_ok(list_of_containers):
@@ -376,12 +458,12 @@ def plot_accelerations(container, axes, label = None, title = "accel"):
     
     for ax, data, title in zip(axes, acc, titles):
         ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(markerscale=3.0, loc= 2)
         ax.set_title(title)
         ax.set_ylabel("m/s2")
         
         
-def plot_vel(container, axes, label = None):
+def plot_vel(container, axes, label = None, plot_cov = False):
     if not container_ok(container):
         print("for label ", label)
         return
@@ -389,20 +471,39 @@ def plot_vel(container, axes, label = None):
         return
     
     r_vel = [list(), list(), list()]
+    stds = [list(), list(), list()]
     stamps = list()
     titles = ["x_vel", "y_vel", "z_vel"]
     
+    # extract data
     for element in container:
         stamps.append(element.stamp)
         r_vel[0].append(element.vel.x)
         r_vel[1].append(element.vel.y)
         r_vel[2].append(element.vel.z)
-    
-    for ax, data, title in zip(axes, r_vel, titles):
-        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(markerscale=3.0)
-        ax.set_ylabel("m/s")
-        ax.set_title(title)
+
+        if element.twist_covariance is not None and plot_cov:
+            stds[0].append(np.sqrt(element.twist_covariance[0,0]))
+            stds[1].append(np.sqrt(element.twist_covariance[1,1]))
+            stds[2].append(np.sqrt(element.twist_covariance[2,2]))
+
+    # plot covariances if desired and available
+    if plot_cov and len(stds[0]) > 0:
+        for ax, data, std, title in zip(axes, r_vel, stds, titles):
+            ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+            upper = [x+y for x,y  in zip(data, std)]
+            lower = [x-y for x,y  in zip(data, std)]
+
+            ax.fill_between(stamps, lower, upper, alpha=0.2, color = ax.get_lines()[-1].get_c())            
+            ax.legend(markerscale=3.0, loc= 2)
+            ax.set_ylabel("m/s")
+            ax.set_title(title)
+    else:
+        for ax, data, title in zip(axes, r_vel, titles):
+            ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+            ax.legend(markerscale=3.0, loc= 2)
+            ax.set_ylabel("m/s")
+            ax.set_title(title)
         
         
 def plot_rot_vel(container, axes, label = None):
@@ -425,7 +526,7 @@ def plot_rot_vel(container, axes, label = None):
     
     for ax, data, title in zip(axes, r_vel, titles):
         ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(markerscale=3.0, loc= 2)
         ax.set_ylabel("rad/s")
         ax.set_title(title)
 
@@ -451,7 +552,7 @@ def plot_flow(container, axes, label = None):
     # add absolute flow
     for ax, data, title in zip(axes, flow, titles):
         ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(markerscale=3.0, loc= 2)
         #ax.set_ylabel("")
         ax.set_title(title)
 
@@ -480,7 +581,7 @@ def plot_force(container,axes, label):
 
     for ax, data, title in zip(axes, f, titles):
         ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(markerscale=3.0, loc= 2)
         ax.set_title(title)
 
 
@@ -505,7 +606,7 @@ def plot_torque(container,axes, label):
 
     for ax, data, title in zip(axes, t, titles):
         ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(markerscale=3.0, loc= 2)
         ax.set_title(title)
 
 
@@ -566,7 +667,7 @@ def plot_fft(container, axes, label, class_member = "lin_acc", sampling_frequenc
     
     for ax, data, title in zip(axes, acc, titles):
         ax.scatter(*get_fft(data), alpha=0.8, s = 4, label=label)
-        ax.legend(markerscale=3.0)
+        ax.legend(markerscale=3.0, loc= 2)
         ax.set_title(title)
         ax.set_ylabel("Magnitude")
         ax.set_xlabel("Frequency")

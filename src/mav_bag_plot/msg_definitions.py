@@ -16,6 +16,9 @@ class State():
         self.euler = None
         
         self.rot_vel = None
+
+        self.pose_covariance = None
+        self.twist_covariance = None
         
         self.flow = None
         self.force = None
@@ -43,7 +46,7 @@ class TF(State):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
         
 class Odom(State):
-    def __init__(self, transl, quat, vel, rot_vel, stamp = None):
+    def __init__(self, transl, quat, vel, rot_vel, pose_cov = None, twist_cov = None, stamp = None):
         super().__init__(transl, stamp)
         self.quat = [quat.x, quat.y, quat.z, quat.w]
         self.vel = vel
@@ -51,6 +54,9 @@ class Odom(State):
 
         self.rot_matrix = None
         self.euler = None
+
+        self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
+        self.twist_covariance = np.asarray(twist_cov).reshape((6,6))
         
         self.generateOrientations()
 

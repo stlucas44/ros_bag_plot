@@ -57,19 +57,26 @@ class BagContainer:
         print("Loading: ", path)
         self.all_topics = list(self.bag.get_type_and_topic_info()[1].keys())
         
+        # multi thread:
+        #Parallel(n_jobs=2)(delayed(self.check_and_load_topic)(topic) for topic in topics)
+
+        # single thread:
         for topic in topics:
-            count = self.all_topics.count(topic)
-            
-            # look for surrogates if we didn't find the exact ones
-            if count == 0:    
-                topic = self.find_surrogate(topic)
-            msgs = read_topic(self.bag, topic) # TODO extend this with regex (find multiple topics?)
-            if msgs is None:
-                continue
-            self.topic_dict[topic] = msgs
-        
+            self.check_and_load_topic(topic)
+
         self.loaded_topics = self.topic_dict.keys()
         pass
+
+    def check_and_load_topic(self, topic):
+        count = self.all_topics.count(topic)
+            
+        # look for surrogates if we didn't find the exact ones
+        if count == 0:    
+            topic = self.find_surrogate(topic)
+        msgs = read_topic(self.bag, topic) # TODO extend this with regex (find multiple topics?)
+        if msgs is None:
+            return
+        self.topic_dict[topic] = msgs
         
     def get_msgs(self, topic):
         try:
@@ -131,7 +138,8 @@ def read_topic(bag, topic):
         time = msg.header.stamp.secs + (10**-9 * msg.header.stamp.nsecs)
         
         if msg_type == "nav_msgs/Odometry":
-            element = Odom(msg.pose.pose.position, msg.pose.pose.orientation, msg.twist.twist.linear, msg.twist.twist.angular, time)
+            element = Odom(msg.pose.pose.position, msg.pose.pose.orientation, msg.twist.twist.linear, msg.twist.twist.angular, 
+                           msg.pose.covariance, msg.twist.covariance, stamp = time)
         elif msg_type == "geometry_msgs/TransformStamped":
             element = TF(msg.transform.translation, msg.transform.rotation, time)
         elif msg_type == "geometry_msgs/PointStamped":
