@@ -7,16 +7,17 @@ import os
 import rosbag
 from rospy import Time
 
-from mav_bag_plot.msg_definitions import Odom, TF, Point, Imu, OpticalFlow, Wrench, MultiDOFJointTrajectory
+from mav_bag_plot.msg_definitions import Odom, TF, Point, PointCloud2, Imu, OpticalFlow, Wrench, MultiDOFJointTrajectory, LaserScan, GenericStamp
 available_msg_types = ["nav_msgs/Odometry",
                        "geometry_msgs/TransformStamped",
                        "geometry_msgs/PointStamped",
+                       "sensor_msgs/PointCloud2",
+                       "sensor_msgs/LaserScan",
                        "sensor_msgs/Imu",
                        "trajectory_msgs/MultiDOFJointTrajectory",
                        "arkflow_ros/OpticalFlow",
                        "mav_msgs/TorqueThrust"  
                        ]
-
 
 def find_files(dir, identifier=None):
     paths = []
@@ -131,8 +132,7 @@ def read_topic(bag, topic):
         return None
         
     if not msg_type in available_msg_types:
-        print("read " + msg_type + " is not implemented yet")
-        return None
+        print(msg_type + " loaded as GenericMsgType, only stamps visualized!")
 
     for topic, msg, t in bag.read_messages(topics=[topic]):
         time = msg.header.stamp.secs + (10**-9 * msg.header.stamp.nsecs)
@@ -144,12 +144,15 @@ def read_topic(bag, topic):
             element = TF(msg.transform.translation, msg.transform.rotation, time)
         elif msg_type == "geometry_msgs/PointStamped":
             element = Point(msg.point, time)
+        elif msg_type == "sensor_msgs/PointCloud2":
+            element = PointCloud2(msg, time)
+        elif msg_type == "sensor_msgs/LaserScan":
+            element = LaserScan(msg, time)
         elif msg_type == "sensor_msgs/Imu":
             element = Imu(msg.orientation, msg.angular_velocity, msg.linear_acceleration, time)
         elif msg_type == "trajectory_msgs/MultiDOFJointTrajectory":
             if len(msg.points) == 0:
                 continue
-                print("no points for MultiDOFJointTrajectory")
             elif len(msg.points) == 1:
                 element = MultiDOFJointTrajectory(msg.points, time)
             else:
@@ -159,14 +162,10 @@ def read_topic(bag, topic):
             element = OpticalFlow([msg.flow_integral_x, msg.flow_integral_y], 
                                   [msg.rate_gyro_integral_x, msg.rate_gyro_integral_y], 
                                    msg.range, msg.integration_interval, time)
-        
         elif msg_type == "mav_msgs/TorqueThrust":
             element = Wrench(msg.thrust, msg.torque, time)
-
         else:
-            print("sth wrong with msg_type")
-            break
-            
+            element = GenericStamp(time)
 
         data.append(element)
 

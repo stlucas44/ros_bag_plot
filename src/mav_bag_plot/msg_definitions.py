@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import sensor_msgs.point_cloud2 as pc2
 
 # base class
 class State():
@@ -23,6 +24,8 @@ class State():
         self.flow = None
         self.force = None
         self.torque = None
+
+        self.points_local = None
         
     def generateOrientations(self):
         try:
@@ -88,6 +91,40 @@ class Point(State):
         if(self.rot_matrix is None):
             raise Exception("No rotation matrix found for point msg")
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
+
+class PointCloud2(State):
+    def __init__(self, ros_msg, stamp=None):
+        super().__init__(None, stamp = stamp)
+
+        #self.quat = quat
+        self.points_local = []
+        self.Body2LidarTF = []
+        self.Map2BaseLinkTF = []
+
+        if ros_msg is None: # checking if constructor is trigger by LaserScan
+            return
+
+        for p in pc2.read_points(ros_msg, field_names=("x", "y", "z"), skip_nans=True):
+            self.points_local.append(p)
+
+        for point in self.points_local:
+            # transform to global frame?
+            # TODO: create TF2 server to transform translator to extract poses
+            pass
+    def transformPoint(self, point):
+        pass
+
+class LaserScan(PointCloud2):
+    def __init__(self, ros_msg, stamp=None):
+        super().__init__(None, stamp = stamp)
+
+        for i, (range_measurement, intensity) in enumerate(zip(ros_msg.ranges, ros_msg.intensities)):
+            angle = ros_msg.angle_min + (i * ros_msg.angle_increment)
+            x,y = (range_measurement * np.cos(angle), range_measurement * np.sin(angle))
+            # reject if outside range
+            if x**2 + y**2 > ros_msg.range_max**2:
+                continue
+            self.points_local.append([x, y, intensity])
 
 class Imu(State):
     def __init__(self, quat, rot_vel, lin_acc, stamp = None):
@@ -155,6 +192,10 @@ class Wrench(State):
         super().__init__(stamp = stamp)
         self.force = [force.x, force.y, force.z]
         self.torque = [torque.x, torque.y, torque.z]
+
+class GenericStamp(State):
+    def __init__(self, stamp):
+        super().__init__(stamp=stamp)
 
 ## Vector surrogate for manipulating data
 class PseudoVec():

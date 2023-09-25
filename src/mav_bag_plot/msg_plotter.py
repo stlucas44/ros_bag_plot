@@ -31,6 +31,32 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     #ax.title("Matching timestamps (but not receipt time!!)")
     plt.draw()
 
+
+def vis_pcl_local(bags, names, stamp, topics=['/pointcloud_2d'], topic_names=None):
+    fig = plt.figure(figsize=(8, 8))
+    ax = fig.add_subplot(111)  # projection='3d')
+    #ax1 = fig.add_subplot(111)
+
+    if topic_names is None:
+        topic_names = topics
+
+    # TODO: introduce slider for pcl selection
+    # TODO: introduce play button for replay
+
+    stamp_counter = 0
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_pcl_2d_local(msgs, ax, stamp, name + topic_name)
+            #plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
+            stamp_counter = stamp_counter + 1
+
+    ax.legend(markerscale=3.0, loc=2)
+    # fig.tight_layout()
+    #ax.title("Matching timestamps (but not receipt time!!)")
+    ax.arrow(0,0, 0.5, 0, color='k')
+    plt.draw()
+
 def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
     #fig1 = plt.figure(figsize=(8, 8))
@@ -170,7 +196,6 @@ def vis_imu(bags, names, topics = ['imu/data_raw'], topic_names = None):
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
             msgs = bag.get_msgs(topic)
-
             plot_accelerations(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
             plot_rot_vel(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
 
@@ -256,7 +281,7 @@ def vis_flow(bags, names, topics = ['/stork/optical_flow125'], topic_names = Non
     plt.draw()
 
 
-def vis_timing(bags, names, topics, topic_names):
+def vis_timing(bags, names, topics = ['/foo'], topic_names = None):
     fig = plt.figure(figsize=(8, 8))
     ax1 = fig.add_subplot(211)# projection='3d')
     ax2 = fig.add_subplot(212)
@@ -370,7 +395,36 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None):
     ax.plot(translations[0], translations[1], label=label)
 
     ax.axis('equal')
-    
+
+
+def plot_pcl_2d_local(list_of_containers, ax, stamp, label = None):
+    if not container_ok(list_of_containers):
+        return
+    if not points_local_ok(list_of_containers):
+        return
+
+    prev_stamp = list_of_containers[0]
+    msg_index = 0
+
+    # find first stamp after required stamp
+    for i, c in enumerate(list_of_containers[1:]):
+        if c.stamp > stamp:
+            break
+        msg_index += 1
+
+    # load points according to stamp
+    points = list_of_containers[msg_index].points_local
+    points = np.asarray(points)
+
+    #check if we really have points
+    if len(points) == 0:
+        return
+
+    ax.scatter(points[:,0], points[:,1], s=4, label=label)
+    #ax.plot(points[0], points[1], label=label)
+
+    ax.axis('equal')
+
 def plot_state_estimate_3D(list_of_containers, ax):
     if not container_ok(list_of_containers):
         return
@@ -710,7 +764,7 @@ def accel_ok(list_of_containers):
 
 def orientation_ok(list_of_containers):
     if list_of_containers[0].euler is None:
-        print("skipping, no velocity")
+        print("skipping, no orientation")
         return False
     return True
         
@@ -728,6 +782,12 @@ def flow_ok(list_of_containers):
 
 def wrench_ok(list_of_containers):
     if list_of_containers[0].force is None:
-        print("skipping, no flow")
+        print("skipping, no force")
+        return False
+    return True
+
+def points_local_ok(list_of_containers):
+    if list_of_containers[0].points_local is None or len(list_of_containers[0].points_local) == 0:
+        print("skipping, no points_local")
         return False
     return True
