@@ -25,7 +25,8 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
             plot_state_estimate_2D(msgs, ax, name + topic_name)
             plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             stamp_counter = stamp_counter + 1
-             
+
+    ax.legend(markerscale=3.0, loc=2)
     ax1.legend(markerscale=3.0, loc= 2 )
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
@@ -688,8 +689,9 @@ def plot_time_diffs(list_of_containers, ax, value = 0, label = None):
 
     prev = list_of_containers[0].stamp - 0.1
     for container in list_of_containers:
-        diffs.append(1/(container.stamp - prev))
-        times.append(container.stamp)# - initial_stamp)
+        dt = (container.stamp - prev) if not (container.stamp - prev) == 0  else -1
+        diffs.append(1/dt)
+        times.append(container.stamp)
 
         if plot_interval:
             measurements.append(1/  container.integration_interval)

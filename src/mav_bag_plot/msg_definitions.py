@@ -42,7 +42,7 @@ class TF(State):
     def __init__(self, transl, quat, stamp = None):
         super().__init__(transl, stamp)
         
-        self.quat = quat
+        self.quat = [quat.x, quat.y, quat.z, quat.w]
         self.generateOrientations()
 
     def transformPoint(self, point):
