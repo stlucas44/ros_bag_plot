@@ -32,6 +32,7 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     #ax.title("Matching timestamps (but not receipt time!!)")
     plt.draw()
 
+    return ax, ax1
 
 def vis_pcl_local(bags, names, stamp, topics=['/pointcloud_2d'], topic_names=None):
     fig = plt.figure(figsize=(8, 8))
@@ -378,23 +379,29 @@ def plot_state_estimate_1D(list_of_containers, ax, label = None, plot_cov = Fals
             a.set_title(n)
             a.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
     
-def plot_state_estimate_2D(list_of_containers, ax, label = None):
+def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing = -1):
     if not container_ok(list_of_containers):
         return
     
     if not translation_ok(list_of_containers):
         return
     
-    translations = np.zeros((3,1))
+    translations = [[], []]
+    headings = []
+    times = []
+
     for container in list_of_containers:
-        translations = np.append(translations, container.t, axis = 1)
-    
-    # get rid of nasty first element
-    translations = np.delete(translations, 0, 1)
+        translations[0].append(container.t[0, 0])
+        translations[1].append(container.t[1, 0])
+        headings.append(container.euler[0])
     
     ax.scatter(translations[0], translations[1], s= 4, label=label)
     ax.plot(translations[0], translations[1], label=label)
 
+    if heading_spacing != -1:
+        length = 0.1
+        for heading, x, y in list(zip(headings, translations[0], translations[1]))[::heading_spacing]:
+            ax.arrow(x,y, length * np.cos(heading / 180 * np.pi), length * np.sin(heading / 180 * np.pi), color='k')
     ax.axis('equal')
 
 
