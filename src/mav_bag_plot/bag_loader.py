@@ -52,6 +52,7 @@ def load_bags(paths, topics, reset_time = False):
 class BagContainer:
     def __init__(self, path, topics):
         self.path = path
+        self.name = os.path.basename(path)
         self.bag = rosbag.Bag(path)
         self.topic_dict = {} # topic with list of msgs
         
