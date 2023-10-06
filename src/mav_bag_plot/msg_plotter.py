@@ -290,7 +290,7 @@ def vis_timing(bags, names, topics = ['/foo'], topic_names = None):
     
     if topic_names is None:
         topic_names = topics
-    
+
     stamp_counter = 0
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
@@ -299,8 +299,9 @@ def vis_timing(bags, names, topics = ['/foo'], topic_names = None):
             plot_time_diffs(msgs, ax2, stamp_counter, name + topic_name)
 
             stamp_counter = stamp_counter + 1
-            
-    ax1.legend(markerscale=3.0, loc= 2 )
+
+    handles, labels = ax1.get_legend_handles_labels()
+    ax1.legend(handles[::-1], labels[::-1], loc='upper left', markerscale=3.0)
     ax2.legend(markerscale=3.0, loc= 2 )
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")

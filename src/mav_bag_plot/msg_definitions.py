@@ -13,6 +13,7 @@ class State():
         self.vel = None
         self.lin_acc = None
 
+        self.quat=None
         self.rot_matrix = None
         self.euler = None
         
