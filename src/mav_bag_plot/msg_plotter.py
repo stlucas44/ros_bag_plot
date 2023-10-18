@@ -6,11 +6,13 @@ from scipy.fft import fft, fftfreq
 from scipy.spatial.transform import Rotation as R
 #import open3d as o3d
 
+plotting_verbosity = 1
+
 ###
 ### main functions to plot states, odometries, velocities and imu data
 ###
 
-def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
+def vis_states(bags, names, topics = ['/Odometry'], topic_names = None, plot_cov = False):
     fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(211)# projection='3d')
     ax1 = fig.add_subplot(212)
@@ -22,12 +24,13 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None):
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
             msgs = bag.get_msgs(topic)
-            plot_state_estimate_2D(msgs, ax, name + topic_name)
+            plot_state_estimate_2D(msgs, ax, name + topic_name, plot_cov=plot_cov)
             plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             stamp_counter = stamp_counter + 1
 
     ax.legend(markerscale=3.0, loc=2)
     ax1.legend(markerscale=3.0, loc= 2 )
+    ax1.invert_yaxis()
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
     plt.draw()
@@ -74,7 +77,7 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     fig2_ax4 = plt.subplot2grid(shape=(6, 1), loc=(3, 0), sharex = fig2_ax1)
     fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex = fig2_ax1)
     fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex = fig2_ax1)
-    
+
     if topic_names is None:
         topic_names = topics
     
@@ -93,6 +96,43 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     fig2.tight_layout()
 
     plt.draw()
+
+
+def vis_odom_2d(bags, names, topics=['/Odometry'], topic_names=None, plot_cov = False):
+    # create plot
+    # fig1 = plt.figure(figsize=(8, 8))
+    # fig1_ax1 = plt.subplot2grid(shape=(3, 3), loc=(0, 0), colspan=2, rowspan=3)
+    # fig1_ax2 = plt.subplot2grid(shape=(3, 3), loc=(0, 2))
+    # fig1_ax3 = plt.subplot2grid(shape=(3, 3), loc=(1, 2))
+    # fig1_ax4 = plt.subplot2grid(shape=(3, 3), loc=(2, 2))
+
+    fig2 = plt.figure(figsize=(16, 9))
+    fig2_ax1 = plt.subplot2grid(shape=(3, 1), loc=(0, 0))
+    fig2_ax2 = plt.subplot2grid(shape=(3, 1), loc=(1, 0), sharex=fig2_ax1)
+    fig2_ax4 = plt.subplot2grid(shape=(3, 1), loc=(2, 0), sharex=fig2_ax1)
+
+    fig3 = plt.figure(figsize=(16, 9))
+    fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex=fig2_ax1)
+    fig2_ax5 = plt.subplot2grid(shape=(6, 1), loc=(4, 0), sharex=fig2_ax1)
+    fig2_ax6 = plt.subplot2grid(shape=(6, 1), loc=(5, 0), sharex=fig2_ax1)
+
+    if topic_names is None:
+        topic_names = topics
+
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+
+            plot_state_estimate_1D(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name, plot_cov=plot_cov)
+            plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name, plot_cov=plot_cov)
+
+    # fig1_ax1.legend(markerscale=3.0, loc= 2)
+    fig2.tight_layout()
+    plt.close(fig3)
+
+    plt.draw()
+    return fig2
+
 
 def vis_odom_state_w_cov(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
@@ -121,7 +161,7 @@ def vis_odom_state_w_cov(bags, names, topics = ['/Odometry'], topic_names = None
             #plot_orientations(odoms, [fig1_ax2, fig1_ax3, fig1_ax4], name + ': ' + topic_name)
             
             plot_state_estimate_1D(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name, plot_cov=True)
-            plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
+            plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name, plot_cov = True)
             
     
     #fig1_ax1.legend(markerscale=3.0, loc= 2)
@@ -293,18 +333,29 @@ def vis_timing(bags, names, topics = ['/foo'], topic_names = None):
 
     stamp_counter = 0
     for bag, name in zip(bags, names):
+        dprint("Timing for " + name, req_v=1)
         for topic, topic_name in zip(topics, topic_names):
             msgs = bag.get_msgs(topic)
             plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             plot_time_diffs(msgs, ax2, stamp_counter, name + topic_name)
 
-            stamp_counter = stamp_counter + 1
+            stamp_counter += 1
+        # split bags for timing vis
+        dprint("\n", req_v=1)
 
-    handles, labels = ax1.get_legend_handles_labels()
-    ax1.legend(handles[::-1], labels[::-1], loc='upper left', markerscale=3.0)
+    # either invert legend or axis
+    #invert legend
+    #handles, labels = ax1.get_legend_handles_labels()
+    #ax1.legend(handles[::-1], labels[::-1], loc='upper left', markerscale=3.0)
+
+    # invert axis
+    ax1.invert_yaxis()
+
+    ax1.inv
     ax2.legend(markerscale=3.0, loc= 2 )
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
+
     plt.draw()
 
 
@@ -363,8 +414,8 @@ def plot_state_estimate_1D(list_of_containers, ax, label = None, plot_cov = Fals
 
     if plot_cov and covs.size!=0:
         for a, t, cov, n in zip(ax, translations, covs, names):
-            upper = t + np.sqrt(cov)
-            lower = t - np.sqrt(cov)
+            upper = t + np.sqrt(np.abs(cov))
+            lower = t - np.sqrt(np.abs(cov))
 
             a.plot(stamps, t, 'o-', ms = 2, lw = 0.5, label = label)
             a.fill_between(stamps, lower, upper, alpha=0.2, color = a.get_lines()[-1].get_c())
@@ -380,7 +431,7 @@ def plot_state_estimate_1D(list_of_containers, ax, label = None, plot_cov = Fals
             a.set_title(n)
             a.legend(loc='center left', bbox_to_anchor=(1, 0.5),markerscale=3.)
     
-def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing = -1):
+def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing = -1, plot_cov = False):
     if not container_ok(list_of_containers):
         return
     
@@ -389,20 +440,30 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing
     
     translations = [[], []]
     headings = []
+    covs= []
     times = []
 
     for container in list_of_containers:
         translations[0].append(container.t[0, 0])
         translations[1].append(container.t[1, 0])
         headings.append(container.euler[0])
+        covs.append([container.pose_covariance[0,0],
+                container.pose_covariance[1,1],
+                container.pose_covariance[5,5]])
+
     
-    ax.scatter(translations[0], translations[1], s= 4, label=label)
-    ax.plot(translations[0], translations[1], label=label)
+    #ax.scatter(translations[0], translations[1], s= 4, label=label)
+    ax.plot(translations[0], translations[1], 'o-', ms =2, lw =1, label=label)
 
     if heading_spacing != -1:
         length = 0.1
         for heading, x, y in list(zip(headings, translations[0], translations[1]))[::heading_spacing]:
             ax.arrow(x,y, length * np.cos(heading / 180 * np.pi), length * np.sin(heading / 180 * np.pi), color='k')
+
+    if plot_cov:
+        dprint("implement ellipsoid half axis plotting for covs")
+        #for cov, x, y in list(zip(covs, translations[0], translations[1]))[::heading_spacing]:
+        #    ax.Circle((x,y), np.sqrt(abs(cov[2])), alpha=0.2, color = ax.get_lines()[-1].get_c())
     ax.axis('equal')
 
 
@@ -450,9 +511,9 @@ def plot_state_estimate_3D(list_of_containers, ax):
                translations[2], 
                c='g', s= 4)
                
-def plot_orientations(container, axes, label = None):
+def plot_orientations(container, axes, label = None, plot_cov = False):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
     if not orientation_ok(container):
         return
@@ -460,24 +521,48 @@ def plot_orientations(container, axes, label = None):
     ypr = [list(), list(), list()]
     stamps = list()
     titles = ["yaw", "pitch", "roll"]
+    covs = []
     
     for element in container:
         for angle, sub_list in zip(element.euler, ypr):
             sub_list.append(angle)
-        
+        if element.pose_covariance is not None:
+            covs.append([element.pose_covariance[5,5],
+                         element.pose_covariance[4,4],
+                         element.pose_covariance[3,3]])
         stamps.append(element.stamp)
-    
-    for ax, data, title in zip(axes, ypr, titles):
-        #ax.scatter(stamps, data, s = 4, label=label)
-        ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
-        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)   
-     
-        ax.set_title(title)
-        
+
+    if not plot_cov:
+        for ax, data, title in zip(axes, ypr, titles):
+            #ax.scatter(stamps, data, s = 4, label=label)
+            ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)
+
+            ax.set_title(title)
+
+    elif plot_cov and len(covs) > 0:
+        covs = list(zip(*covs))
+
+        # stats
+        covs_stat = [c for c in covs[0] if str(c) != 'nan' and c >= 0 ]
+        dprint(f'{label[:31] :31}:  [avg_heading_std] '
+              f'==> {np.round(np.mean(np.sqrt(covs_stat)), 3):5}', req_v=1)
+
+        for ax, t, cov, n in zip(axes, ypr, covs, titles):
+            upper = t + (np.sqrt(np.abs(cov)) / np.pi * 180)
+            lower = t - (np.sqrt(np.abs(cov)) / np.pi * 180)
+
+            ax.plot(stamps, t, 'o-', ms=2, lw=0.5, label=label)
+            ax.fill_between(stamps, lower, upper, alpha=0.2, color=ax.get_lines()[-1].get_c())
+
+            ax.set_title(n)
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), markerscale=3.)
+    else:
+        dprint("plot_orientations: no covs for heading", req_v=2)
         
 def plot_quat(container, axes, label = None):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
     if not orientation_ok(container):
         return
@@ -502,7 +587,7 @@ def plot_quat(container, axes, label = None):
         
 def plot_accelerations(container, axes, label = None, title = "accel"):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
 
     if not accel_ok(container):
@@ -514,9 +599,9 @@ def plot_accelerations(container, axes, label = None, title = "accel"):
     
     for element in container:
         stamps.append(element.stamp)
-        acc[0].append(element.lin_acc.x)
-        acc[1].append(element.lin_acc.y)
-        acc[2].append(element.lin_acc.z)
+        acc[0].append(element.lin_acc[0])
+        acc[1].append(element.lin_acc[1])
+        acc[2].append(element.lin_acc[2])
 
     
     for ax, data, title in zip(axes, acc, titles):
@@ -528,12 +613,12 @@ def plot_accelerations(container, axes, label = None, title = "accel"):
         
 def plot_vel(container, axes, label = None, plot_cov = False):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
     if not vel_ok(container):
         return
     
-    r_vel = [list(), list(), list()]
+    vel = [list(), list(), list()]
     stds = [list(), list(), list()]
     stamps = list()
     titles = ["x_vel", "y_vel", "z_vel"]
@@ -541,9 +626,8 @@ def plot_vel(container, axes, label = None, plot_cov = False):
     # extract data
     for element in container:
         stamps.append(element.stamp)
-        r_vel[0].append(element.vel.x)
-        r_vel[1].append(element.vel.y)
-        r_vel[2].append(element.vel.z)
+        for vel_list, vel_value in zip(vel, element.vel):
+            vel_list.append(vel_value)
 
         if element.twist_covariance is not None and plot_cov:
             stds[0].append(np.sqrt(element.twist_covariance[0,0]))
@@ -552,7 +636,7 @@ def plot_vel(container, axes, label = None, plot_cov = False):
 
     # plot covariances if desired and available
     if plot_cov and len(stds[0]) > 0:
-        for ax, data, std, title in zip(axes, r_vel, stds, titles):
+        for ax, data, std, title in zip(axes, vel, stds, titles):
             ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
             upper = [x+y for x,y  in zip(data, std)]
             lower = [x-y for x,y  in zip(data, std)]
@@ -562,7 +646,7 @@ def plot_vel(container, axes, label = None, plot_cov = False):
             ax.set_ylabel("m/s")
             ax.set_title(title)
     else:
-        for ax, data, title in zip(axes, r_vel, titles):
+        for ax, data, title in zip(axes, vel, titles):
             ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
             ax.legend(markerscale=3.0, loc= 2)
             ax.set_ylabel("m/s")
@@ -571,7 +655,7 @@ def plot_vel(container, axes, label = None, plot_cov = False):
         
 def plot_rot_vel(container, axes, label = None):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
 
     if not rot_vel_ok(container):
@@ -583,9 +667,8 @@ def plot_rot_vel(container, axes, label = None):
     
     for element in container:
         stamps.append(element.stamp)
-        r_vel[0].append(element.rot_vel.x)
-        r_vel[1].append(element.rot_vel.y)
-        r_vel[2].append(element.rot_vel.z)
+        for r_vel_list, r_vel_value in zip(r_vel, element.rot_vel):
+            r_vel_list.append(r_vel_value)
     
     for ax, data, title in zip(axes, r_vel, titles):
         ax.plot(stamps, data, 'o-', ms = 2, lw = 0.5, label=label)
@@ -595,7 +678,7 @@ def plot_rot_vel(container, axes, label = None):
 
 def plot_flow(container, axes, label = None):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
 
     if not flow_ok(container):
@@ -623,7 +706,7 @@ def plot_flow(container, axes, label = None):
 
 def plot_force(container,axes, label):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
 
     if not wrench_ok(container):
@@ -650,7 +733,7 @@ def plot_force(container,axes, label):
 
 def plot_torque(container,axes, label):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
 
     if not wrench_ok(container):
@@ -677,13 +760,27 @@ def plot_torque(container,axes, label):
 def plot_time_stamps(list_of_containers, ax, value = 0, label = None):
     if not container_ok(list_of_containers):
         return
-        
+
+
     times = []
+    receipt_times = []
     initial_stamp = list_of_containers[0].stamp
     for container in list_of_containers:
-        
         times.append(container.stamp)# - initial_stamp)
+        receipt_times.append(container.receipt_time)
+
     ax.scatter(times, [value for t in times], s = 4, label = label)
+    ax.scatter(receipt_times, [value + 0.3 for t in receipt_times], s=4, c='k', label='__nolegend__')
+
+    rate = 10
+    receipt_delays = []
+    for t, rt in zip(times[::rate], receipt_times[::rate]):
+        ax.arrow(t, value, rt - t , 0.3)
+        receipt_delays.append(rt - t)
+    topic_name = label.split('/')[-1]
+    dprint(f'{topic_name :20}  Receipt delays ms : [avg, std] ==> '
+          f'{np.round(np.mean(receipt_delays)* 10**3,1) :6}, '
+          f'{np.round(np.std(receipt_delays) *10**3,2):6} ]', req_v=1)
 
 def plot_time_diffs(list_of_containers, ax, value = 0, label = None):
     if not container_ok(list_of_containers):
@@ -714,7 +811,7 @@ def plot_time_diffs(list_of_containers, ax, value = 0, label = None):
     
 def plot_fft(container, axes, label, class_member = "lin_acc", sampling_frequency = 1/191.0):
     if not container_ok(container):
-        print("for label ", label)
+        dprint("for label ", label, req_v=5)
         return
     
     acc = [list(), list(), list()]
@@ -750,54 +847,59 @@ def get_fft(signal, sampling_frequency = 1/191.0): # Adis on stork runs on 191 H
 
 def container_ok(list_of_containers):
     if list_of_containers is None or not list_of_containers: # If none or empty
-        print("skipping, no msgs ", end = "")
+        dprint("skipping, no msgs ", req_v=5)
         return False
     return True
 
 def translation_ok(list_of_containers):
     if list_of_containers[0].t is None:
-        print("skipping, no translation")
+        dprint("skipping, no translation", req_v=5)
         return False
     return True
         
 def vel_ok(list_of_containers):
     if list_of_containers[0].vel is None:
-        print("skipping, no velocity")
+        dprint("skipping, no velocity", req_v=5)
         return False
     return True
 
 def accel_ok(list_of_containers):
     if list_of_containers[0].lin_acc is None:
-        print("skipping, no linear acceleration")
+        dprint("skipping, no linear acceleration", req_v=5)
         return False
     return True
 
 def orientation_ok(list_of_containers):
     if list_of_containers[0].euler is None:
-        print("skipping, no orientation")
+        dprint("skipping, no orientation", req_v=5)
         return False
     return True
         
 def rot_vel_ok(list_of_containers):
     if list_of_containers[0].rot_vel is None:
-        print("skipping, no rotational velocity")
+        dprint("skipping, no rotational velocity", req_v=5)
         return False
     return True
 
 def flow_ok(list_of_containers):
     if list_of_containers[0].flow is None:
-        print("skipping, no flow")
+        dprint("skipping, no flow", req_v=5)
         return False
     return True
 
 def wrench_ok(list_of_containers):
     if list_of_containers[0].force is None:
-        print("skipping, no force")
+        dprint("skipping, no force", req_v=5)
         return False
     return True
 
 def points_local_ok(list_of_containers):
     if list_of_containers[0].points_local is None or len(list_of_containers[0].points_local) == 0:
-        print("skipping, no points_local")
+        dprint("skipping, no points_local", req_v=5)
         return False
     return True
+
+
+def dprint(*args, req_v = 0):
+    if plotting_verbosity >= req_v:
+        print(*args)

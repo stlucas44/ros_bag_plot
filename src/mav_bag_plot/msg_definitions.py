@@ -4,8 +4,9 @@ import sensor_msgs.point_cloud2 as pc2
 
 # base class
 class State():
-    def __init__(self, transl = None , stamp = None):
+    def __init__(self, transl = None , stamp = None, receipt_time = None):
         self.stamp = stamp
+        self.receipt_time = receipt_time
         if transl is not None:
             self.t = np.asarray([[transl.x, transl.y, transl.z]]).T
         else:
@@ -40,28 +41,45 @@ class State():
 
 # inherited msgs from base
 class TF(State):
-    def __init__(self, transl, quat, stamp = None):
-        super().__init__(transl, stamp)
+    def __init__(self, transl, quat, stamp = None, receipt_time = None):
+        super().__init__(transl, stamp = stamp, receipt_time = receipt_time)
         
         self.quat = [quat.x, quat.y, quat.z, quat.w]
         self.generateOrientations()
 
     def transformPoint(self, point):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
-        
-class Odom(State):
-    def __init__(self, transl, quat, vel, rot_vel, pose_cov = None, twist_cov = None, stamp = None):
-        super().__init__(transl, stamp)
+
+class Pose (State):
+    def __init__(self, transl, quat, pose_cov = None, stamp = None, receipt_time = None):
+        super().__init__(transl, stamp = stamp, receipt_time = receipt_time)
         self.quat = [quat.x, quat.y, quat.z, quat.w]
-        self.vel = vel
-        self.rot_vel = rot_vel
+
+        self.rot_matrix = None
+        self.euler = None
+
+        self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
+
+        self.generateOrientations()
+
+    def transformPoint(self, point):
+        #print(self.rot_matrix.as_matrix(), "\n", self.t)
+        return np.dot(self.rot_matrix.as_matrix(), point) + self.t
+
+
+class Odom(State):
+    def __init__(self, transl, quat, vel, rot_vel, pose_cov = None, twist_cov = None, stamp = None, receipt_time = None):
+        super().__init__(transl, stamp = stamp, receipt_time = receipt_time)
+        self.quat = [quat.x, quat.y, quat.z, quat.w]
+        self.vel = [vel.x, vel.y, vel.z]
+        self.rot_vel = [rot_vel.x, rot_vel.y, rot_vel.z]
 
         self.rot_matrix = None
         self.euler = None
 
         self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
         self.twist_covariance = np.asarray(twist_cov).reshape((6,6))
-        
+
         self.generateOrientations()
 
     def transformPoint(self, point):
@@ -69,15 +87,21 @@ class Odom(State):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class MultiDOFJointTrajectory(State):
-    def __init__(self, tpoints, stamp = None):
-        super().__init__(tpoints[0].transforms[0].translation, stamp = stamp)
+    def __init__(self, tpoints, stamp = None, receipt_time = None):
+        super().__init__(tpoints[0].transforms[0].translation, stamp = stamp, receipt_time = receipt_time)
 
         quat = tpoints[0].transforms[0].rotation
         self.quat = [quat.x, quat.y, quat.z, quat.w]
 
-        self.vel = tpoints[0].velocities[0].linear
-        self.rot_vel = tpoints[0].velocities[0].angular
-        self.lin_acc = tpoints[0].accelerations[0].linear
+        self.vel = [tpoints[0].velocities[0].linear.x,
+                    tpoints[0].velocities[0].linear.y,
+                    tpoints[0].velocities[0].linear.z]
+        self.rot_vel = [tpoints[0].velocities[0].angular.x,
+                        tpoints[0].velocities[0].angular.y,
+                        tpoints[0].velocities[0].angular.z]
+        self.lin_acc = [tpoints[0].accelerations[0].linear.x,
+                        tpoints[0].accelerations[0].linear.y,
+                        tpoints[0].accelerations[0].linear.z]
 
         self.generateOrientations()
 
@@ -94,8 +118,8 @@ class Point(State):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class PointCloud2(State):
-    def __init__(self, ros_msg, stamp=None):
-        super().__init__(None, stamp = stamp)
+    def __init__(self, ros_msg, stamp = None, receipt_time = None):
+        super().__init__(None, stamp = stamp, receipt_time = receipt_time)
 
         #self.quat = quat
         self.points_local = []
@@ -116,8 +140,8 @@ class PointCloud2(State):
         pass
 
 class LaserScan(PointCloud2):
-    def __init__(self, ros_msg, stamp=None):
-        super().__init__(None, stamp = stamp)
+    def __init__(self, ros_msg, stamp=None, receipt_time = None):
+        super().__init__(None, stamp = stamp, receipt_time = receipt_time)
 
         for i, (range_measurement, intensity) in enumerate(zip(ros_msg.ranges, ros_msg.intensities)):
             angle = ros_msg.angle_min + (i * ros_msg.angle_increment)
@@ -128,19 +152,19 @@ class LaserScan(PointCloud2):
             self.points_local.append([x, y, intensity])
 
 class Imu(State):
-    def __init__(self, quat, rot_vel, lin_acc, stamp = None):
-        super().__init__(stamp = stamp)
-        
+    def __init__(self, quat, rot_vel, lin_acc, stamp = None, receipt_time = None):
+        super().__init__(stamp = stamp, receipt_time = receipt_time)
+
         self.quat = [quat.x, quat.y, quat.z, quat.w]
         self.rot_matrix = None
         self.euler = None
-        
+
         self.vel = None
-        self.rot_vel = rot_vel
-        
-        self.lin_acc = lin_acc
+        self.rot_vel = [rot_vel.x, rot_vel.y, rot_vel.z]
+
+        self.lin_acc = [lin_acc.x, lin_acc.y, lin_acc.z]
         self.generateOrientations()
-        
+
     def transformPoint(self, point):
         #print(self.rot_matrix.as_matrix(), "\n", self.t)
         if(self.rot_matrix is None):
@@ -148,8 +172,8 @@ class Imu(State):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
 class OpticalFlow(State):
-    def __init__(self, flow, rot_integral, range, integration_interval, stamp = None):
-        super().__init__(stamp = stamp)
+    def __init__(self, flow, rot_integral, range, integration_interval, stamp = None, receipt_time = None):
+        super().__init__(stamp = stamp, receipt_time = receipt_time)
 
         # sensor frame
         v_x_loc_uncorrected = flow[0] * range / integration_interval # this is the absolute change?
@@ -158,45 +182,45 @@ class OpticalFlow(State):
         # attention to signs!!
         v_x_loc = (flow[0] - rot_integral[1]) * range / integration_interval # this is the absolute change?
         v_y_loc = (flow[1] + rot_integral[0]) * range / integration_interval
-        
+
         #writing it down in body frame
         self.t = np.asarray([[0.0, 0.0, range]]).T
-        self.vel = PseudoVec(-v_y_loc, 
-                             -v_x_loc, 
-                             0)
+        self.vel = [-v_y_loc,
+                             -v_x_loc,
+                             0]
 
         self.lin_acc = None
         self.flow = [-flow[1], -flow[0]]
         self.integration_interval = integration_interval
 
         self.range = range
-        self.rot_vel = PseudoVec(-rot_integral[1] / integration_interval,
+        self.rot_vel = [-rot_integral[1] / integration_interval,
                                  -rot_integral[0] / integration_interval,
-                                0.0)
+                                0.0]
         self.rot_integral = rot_integral
 
 
-        self.vel_uncorrected= PseudoVec(-v_y_loc_uncorrected, 
-                                        -v_x_loc_uncorrected, 
-                                        0)
+        self.vel_uncorrected= [-v_y_loc_uncorrected,
+                                        -v_x_loc_uncorrected,
+                                        0]
 
 
         self.euler = None
 
-    def transform_Flow(self):
+    def transform_flow(self):
         print("implement transform rot_vel")
         pass
 
 
 class Wrench(State):
-    def __init__(self, force, torque, stamp):
-        super().__init__(stamp = stamp)
+    def __init__(self, force, torque, stamp = None, receipt_time = None):
+        super().__init__(stamp = stamp, receipt_time = receipt_time)
         self.force = [force.x, force.y, force.z]
         self.torque = [torque.x, torque.y, torque.z]
 
 class GenericStamp(State):
-    def __init__(self, stamp):
-        super().__init__(stamp=stamp)
+    def __init__(self, stamp = None, receipt_time = None):
+        super().__init__(stamp = stamp, receipt_time = receipt_time)
 
 ## Vector surrogate for manipulating data
 class PseudoVec():
