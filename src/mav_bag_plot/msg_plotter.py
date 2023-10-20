@@ -447,10 +447,10 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing
         translations[0].append(container.t[0, 0])
         translations[1].append(container.t[1, 0])
         headings.append(container.euler[0])
-        covs.append([container.pose_covariance[0,0],
-                container.pose_covariance[1,1],
-                container.pose_covariance[5,5]])
-
+        if container.pose_covariance is not None:
+            covs.append([container.pose_covariance[0,0],
+                    container.pose_covariance[1,1],
+                    container.pose_covariance[5,5]])
     
     #ax.scatter(translations[0], translations[1], s= 4, label=label)
     ax.plot(translations[0], translations[1], 'o-', ms =2, lw =1, label=label)
