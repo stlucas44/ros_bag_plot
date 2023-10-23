@@ -350,8 +350,6 @@ def vis_timing(bags, names, topics = ['/foo'], topic_names = None):
 
     # invert axis
     ax1.invert_yaxis()
-
-    ax1.inv
     ax2.legend(markerscale=3.0, loc= 2 )
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
