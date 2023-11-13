@@ -50,15 +50,19 @@ class TF(State):
     def transformPoint(self, point):
         return np.dot(self.rot_matrix.as_matrix(), point) + self.t
 
-class Pose (State):
+class Pose(State):
     def __init__(self, transl, quat, pose_cov = None, stamp = None, receipt_time = None):
         super().__init__(transl, stamp = stamp, receipt_time = receipt_time)
         self.quat = [quat.x, quat.y, quat.z, quat.w]
+        if np.all(self.quat == [0.0, 0.0, 0.0, 0.0]):
+            self.quat = [0.0, 0.0, 0.0, 1.0]
 
         self.rot_matrix = None
         self.euler = None
-
-        self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
+        if pose_cov is not None:
+            self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
+        else:
+            self.pose_covariance = None
 
         self.generateOrientations()
 

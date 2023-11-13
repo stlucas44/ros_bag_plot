@@ -98,7 +98,7 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     plt.draw()
 
 
-def vis_odom_2d(bags, names, topics=['/Odometry'], topic_names=None, plot_cov = False):
+def vis_odom_2d(bags, names, topics=['/Odometry'], topic_names=None, plot_cov = False, title="Odom2d"):
     # create plot
     # fig1 = plt.figure(figsize=(8, 8))
     # fig1_ax1 = plt.subplot2grid(shape=(3, 3), loc=(0, 0), colspan=2, rowspan=3)
@@ -110,6 +110,7 @@ def vis_odom_2d(bags, names, topics=['/Odometry'], topic_names=None, plot_cov = 
     fig2_ax1 = plt.subplot2grid(shape=(3, 1), loc=(0, 0))
     fig2_ax2 = plt.subplot2grid(shape=(3, 1), loc=(1, 0), sharex=fig2_ax1)
     fig2_ax4 = plt.subplot2grid(shape=(3, 1), loc=(2, 0), sharex=fig2_ax1)
+    fig2.suptitle(title, fontsize=16)
 
     fig3 = plt.figure(figsize=(16, 9))
     fig2_ax3 = plt.subplot2grid(shape=(6, 1), loc=(2, 0), sharex=fig2_ax1)
@@ -444,7 +445,10 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing
     for container in list_of_containers:
         translations[0].append(container.t[0, 0])
         translations[1].append(container.t[1, 0])
-        headings.append(container.euler[0])
+
+        if container.euler is not None:
+            headings.append(container.euler[0])
+
         if container.pose_covariance is not None:
             covs.append([container.pose_covariance[0,0],
                     container.pose_covariance[1,1],
@@ -455,8 +459,9 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing
 
     if heading_spacing != -1:
         length = 0.1
-        for heading, x, y in list(zip(headings, translations[0], translations[1]))[::heading_spacing]:
-            ax.arrow(x,y, length * np.cos(heading / 180 * np.pi), length * np.sin(heading / 180 * np.pi), color='k')
+        if len(headings) > 0:
+            for heading, x, y in list(zip(headings, translations[0], translations[1]))[::heading_spacing]:
+                ax.arrow(x,y, length * np.cos(heading / 180 * np.pi), length * np.sin(heading / 180 * np.pi), color='k')
 
     if plot_cov:
         dprint("implement ellipsoid half axis plotting for covs")
@@ -502,7 +507,7 @@ def plot_state_estimate_3D(list_of_containers, ax):
     translations = np.empty((3,1))
     
     for tf in list_of_containers:
-        translations = np.append(translations, tf.t, axis = 1); 
+        translations = np.append(translations, tf.t, axis = 1)
         
     ax.scatter(translations[0], 
                translations[1],

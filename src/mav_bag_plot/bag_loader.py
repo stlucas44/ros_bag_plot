@@ -11,6 +11,7 @@ from mav_bag_plot.msg_definitions import Odom, Pose, TF, Point, PointCloud2, Imu
 available_msg_types = ["nav_msgs/Odometry",
                        "geometry_msgs/TransformStamped",
                        "geometry_msgs/PoseWithCovarianceStamped",
+                       "geometry_msgs/PoseStamped",
                        "geometry_msgs/PointStamped",
                        "sensor_msgs/PointCloud2",
                        "sensor_msgs/LaserScan",
@@ -43,7 +44,7 @@ def find_files(dir, identifier=None):
             # sort and add
             new_paths += sorted(paths_per_identifier)
 
-        #remove dublicats
+        #remove dublicates
         new_paths = [i for n, i in enumerate(new_paths) if i not in new_paths[:n]]
         paths = new_paths
     
@@ -159,7 +160,8 @@ def read_topic(bag, topic):
         elif msg_type == "geometry_msgs/PoseWithCovarianceStamped":
             element = Pose(msg.pose.pose.position, msg.pose.pose.orientation,
                            msg.pose.covariance, stamp = time, receipt_time = receipt_time)
-
+        elif msg_type == "geometry_msgs/PoseStamped":
+            element = Pose(msg.pose.position, msg.pose.orientation, stamp = time, receipt_time = receipt_time)
         elif msg_type == "geometry_msgs/PointStamped":
             element = Point(msg.point, stamp = time, receipt_time = receipt_time)
         elif msg_type == "sensor_msgs/PointCloud2":
