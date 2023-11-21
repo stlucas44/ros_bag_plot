@@ -12,11 +12,11 @@ plotting_verbosity = 1
 ### main functions to plot states, odometries, velocities and imu data
 ###
 
-def vis_states(bags, names, topics = ['/Odometry'], topic_names = None, plot_cov = False):
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(211)# projection='3d')
-    ax1 = fig.add_subplot(212)
-    
+def vis_states(bags, names, topics = ['/Odometry'], topic_names = None, plot_cov = False, heading_spacing = -1):
+    fig = plt.figure(figsize=(10, 10))
+    ax = plt.subplot2grid(shape=(10, 10), loc=(0, 0), rowspan=7, colspan=10)
+    ax1 = plt.subplot2grid(shape=(10, 10), loc=(7, 0), rowspan=3, colspan=10)
+
     if topic_names is None:
         topic_names = topics
     
@@ -24,7 +24,7 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None, plot_cov
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
             msgs = bag.get_msgs(topic)
-            plot_state_estimate_2D(msgs, ax, name + topic_name, plot_cov=plot_cov)
+            plot_state_estimate_2D(msgs, ax, name + topic_name, plot_cov=plot_cov, heading_spacing=heading_spacing)
             plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             stamp_counter = stamp_counter + 1
 
@@ -33,14 +33,15 @@ def vis_states(bags, names, topics = ['/Odometry'], topic_names = None, plot_cov
     ax1.invert_yaxis()
     #fig.tight_layout()
     #ax.title("Matching timestamps (but not receipt time!!)")
+    plt.tight_layout()
     plt.draw()
 
     return ax, ax1
 
-def vis_pcl_local(bags, names, stamp, topics=['/pointcloud_2d'], topic_names=None):
-    fig = plt.figure(figsize=(8, 8))
-    ax = fig.add_subplot(111)  # projection='3d')
-    #ax1 = fig.add_subplot(111)
+def vis_pcl_local(bags, names, stamp, topics=['/pointcloud_2d'], topic_names=None, ax = None):
+    if ax is None:
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111)  # projection='3d')
 
     if topic_names is None:
         topic_names = topics
@@ -53,14 +54,37 @@ def vis_pcl_local(bags, names, stamp, topics=['/pointcloud_2d'], topic_names=Non
         for topic, topic_name in zip(topics, topic_names):
             msgs = bag.get_msgs(topic)
             plot_pcl_2d_local(msgs, ax, stamp, name + topic_name)
-            #plot_time_stamps(msgs, ax1, stamp_counter, name + topic_name)
             stamp_counter = stamp_counter + 1
 
     ax.legend(markerscale=3.0, loc=2)
     # fig.tight_layout()
-    #ax.title("Matching timestamps (but not receipt time!!)")
-    ax.arrow(0,0, 0.5, 0, color='k')
+    ax.arrow(0,0, 0.5, 0, color='k', head_width=0.1)
+    ax.arrow(0,0, 0, 0.5, color='k', head_width=0.1)
     plt.draw()
+    return ax
+
+
+def vis_pcl_global(bags, names, stamp, topics=['/pointcloud_2d'], topic_names=None, ax = None):
+    if ax is None:
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111)  # projection='3d')
+
+    if topic_names is None:
+        topic_names = topics
+
+    stamp_counter = 0
+    for bag, name in zip(bags, names):
+        for topic, topic_name in zip(topics, topic_names):
+            msgs = bag.get_msgs(topic)
+            plot_pcl_2d_global(msgs, ax, stamp, name + topic_name)
+            stamp_counter = stamp_counter + 1
+
+    ax.legend(markerscale=3.0, loc=2)
+    # fig.tight_layout()
+    ax.arrow(0,0, 0.5, 0, color='k', head_width=0.1)
+    ax.arrow(0,0, 0, 0.5, color='k', head_width=0.1)
+    plt.draw()
+    return ax
 
 def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     # create plot
@@ -84,10 +108,6 @@ def vis_odom(bags, names, topics = ['/Odometry'], topic_names = None):
     for bag, name in zip(bags, names):
         for topic, topic_name in zip(topics, topic_names):
             msgs = bag.get_msgs(topic)
-            
-            #plot_state_estimate_2D(odoms, fig1_ax1, name + ': ' + topic_name)
-            #plot_orientations(odoms, [fig1_ax2, fig1_ax3, fig1_ax4], name + ': ' + topic_name)
-            
             plot_state_estimate_1D(msgs, [fig2_ax1, fig2_ax2, fig2_ax3], name + ': ' + topic_name)
             plot_orientations(msgs, [fig2_ax4, fig2_ax5, fig2_ax6], name + ': ' + topic_name)
             
@@ -467,6 +487,10 @@ def plot_state_estimate_2D(list_of_containers, ax, label = None, heading_spacing
         dprint("implement ellipsoid half axis plotting for covs")
         #for cov, x, y in list(zip(covs, translations[0], translations[1]))[::heading_spacing]:
         #    ax.Circle((x,y), np.sqrt(abs(cov[2])), alpha=0.2, color = ax.get_lines()[-1].get_c())
+
+    ax.arrow(0, 0, 0.5, 0, color='tab:grey')
+    ax.arrow(0, 0, 0, 0.5, color='tab:grey')
+
     ax.axis('equal')
 
 
@@ -485,7 +509,7 @@ def plot_pcl_2d_local(list_of_containers, ax, stamp, label = None):
             break
         msg_index += 1
 
-    # load points according to stamp
+    # load points according to stamps
     points = list_of_containers[msg_index].points_local
     points = np.asarray(points)
 
@@ -493,9 +517,32 @@ def plot_pcl_2d_local(list_of_containers, ax, stamp, label = None):
     if len(points) == 0:
         return
 
-    ax.scatter(points[:,0], points[:,1], s=4, label=label)
-    #ax.plot(points[0], points[1], label=label)
+    ax.scatter(points[:,0], points[:,1], s=4, label=label, c=list_of_containers[msg_index].intensities, cmap='YlOrRd')
+    ax.axis('equal')
 
+def plot_pcl_2d_global(list_of_containers, ax, stamp, label = None):
+    if not container_ok(list_of_containers):
+        return
+    if not points_local_ok(list_of_containers):
+        return
+
+    prev_stamp = list_of_containers[0]
+    msg_index = 0
+
+    # find first stamp after required stamp
+    for i, c in enumerate(list_of_containers[1:]):
+        if c.stamp > stamp:
+            break
+        msg_index += 1
+
+    # load points according to stamps
+    points = list_of_containers[msg_index].points_global
+    points = np.asarray(points)
+
+    #check if we really have points
+    if len(points) == 0:
+        return
+    ax.scatter(points[:,0], points[:,1], s=4, label=label, c=list_of_containers[msg_index].intensities_global, cmap='YlOrRd')
     ax.axis('equal')
 
 def plot_state_estimate_3D(list_of_containers, ax):
@@ -843,6 +890,11 @@ def get_fft(signal, sampling_frequency = 1/191.0): # Adis on stork runs on 191 H
     fft_data = fft(signal)
     fft_freq = fftfreq(len(signal), sampling_frequency)
     return fft_freq[0:N//2], ((np.abs(fft_data)))[0:N//2]
+
+def update_slider():
+    pass
+
+
 
 ###
 ### checkers to prevent 

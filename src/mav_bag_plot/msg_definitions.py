@@ -1,3 +1,4 @@
+from copy import deepcopy
 import numpy as np
 from scipy.spatial.transform import Rotation as R
 import sensor_msgs.point_cloud2 as pc2
@@ -38,6 +39,14 @@ class State():
             
     def reset_stamp(self, stamp):
         self.stamp = self.stamp - stamp
+
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result
 
 # inherited msgs from base
 class TF(State):
@@ -81,8 +90,10 @@ class Odom(State):
         self.rot_matrix = None
         self.euler = None
 
-        self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
-        self.twist_covariance = np.asarray(twist_cov).reshape((6,6))
+        if pose_cov is not None:
+            self.pose_covariance = np.asarray(pose_cov).reshape((6,6))
+        if twist_cov is not None:
+            self.twist_covariance = np.asarray(twist_cov).reshape((6,6))
 
         self.generateOrientations()
 
@@ -127,20 +138,31 @@ class PointCloud2(State):
 
         #self.quat = quat
         self.points_local = []
+        self.points_global = []
+        self.intensities = []
+        self.intensities_global = []
+        self.refl = []
         self.Body2LidarTF = []
         self.Map2BaseLinkTF = []
 
         if ros_msg is None: # checking if constructor is trigger by LaserScan
             return
 
-        for p in pc2.read_points(ros_msg, field_names=("x", "y", "z"), skip_nans=True):
-            self.points_local.append(p)
+        for info in pc2.read_points(ros_msg, field_names=("x", "y", "z", "intensity", "reflectivity"), skip_nans=True):
+            self.points_local.append([info[0], info[1], info[2]])
+            self.intensities.append(info[3])
+            self.refl.append(info[4])
 
-        for point in self.points_local:
-            # transform to global frame?
-            # TODO: create TF2 server to transform translator to extract poses
-            pass
-    def transformPoint(self, point):
+        #for point in self.points_local:
+         #   # transform to global frame?
+         #   # TODO: create TF2 server to transform translator to extract poses
+         #   pass
+    def transformPoints(self):
+        for point_local, intensity in zip(self.points_local, self.intensities):
+            p_loc = np.asarray(point_local).reshape(3,1)
+            p_glob = np.dot(self.rot_matrix.as_matrix(), p_loc) + self.t
+            self.points_global.append(p_glob.reshape(3,).tolist())
+            self.intensities_global.append(intensity)
         pass
 
 class LaserScan(PointCloud2):
@@ -154,6 +176,7 @@ class LaserScan(PointCloud2):
             if x**2 + y**2 > ros_msg.range_max**2:
                 continue
             self.points_local.append([x, y, intensity])
+            self.intensities.append(intensity)
 
 class Imu(State):
     def __init__(self, quat, rot_vel, lin_acc, stamp = None, receipt_time = None):
